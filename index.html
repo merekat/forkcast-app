@@ -472,7 +472,9 @@ app.querySelectorAll("[data-dedit]").forEach(b=>b.onclick=()=>{let d=ds[+b.datas
 app.querySelectorAll("[data-ddel]").forEach(b=>b.onclick=()=>{let d=ds[+b.dataset.ddel];if(d)deleteDish(r,lc(d.name),d)})}
 async function deleteDish(r,key,d){if(!await ask(`Delete “${d.name}”${d.count>1?` from all ${d.count} visits`:""}?`,"Delete",true))return;r.visits.forEach(vv=>vv.dishes=(vv.dishes||[]).filter(x=>lc(x.name)!==key));save();sugg=null;render()}
 async function delVisit(rid,vid){let r=byId(rid);if(!r||!await ask("Delete this visit?","Delete",true))return;r.visits=r.visits.filter(x=>x.id!==vid);save();sugg=null;render()}
-async function delRest(rid){let r=byId(rid);if(!r||!await ask(`Delete “${r.name}” and all its visits?`,"Delete",true))return;db.restaurants=db.restaurants.filter(x=>x.id!==rid);save();sugg=null;back()}
+async function delRest(rid){let r=byId(rid);if(!r||!await ask(`Delete “${r.name}” and all its visits?`,"Delete",true))return;
+ (db.deletedRestaurants??=[]).push({id:rid,at:Date.now()});if(db.deletedRestaurants.length>300)db.deletedRestaurants=db.deletedRestaurants.slice(-300);
+ db.restaurants=db.restaurants.filter(x=>x.id!==rid);save();sugg=null;back()}
 
 // ---------- Gericht bearbeiten ----------
 function renderDish(app,v){let r=byId(v.rid),d=r&&dishesOf(r).find(x=>lc(x.name)===v.key);if(!d){app.innerHTML=`<div class="card"><button class="link" onclick="back()">← Back</button><p class="muted">This dish no longer exists.</p></div>`;return}
@@ -561,17 +563,27 @@ let c=[];(db.tagCatalog||[]).map(t=>lc(t)===lc(old)?nw:t).forEach(t=>{if(!c.some
 async function deleteTag(name){let n=db.restaurants.filter(r=>(r.tags||[]).some(t=>lc(t)===lc(name))).length;if(!await ask(n?`Delete “${name}” and remove it from ${n} restaurant${n===1?"":"s"}?`:`Delete “${name}”?`,"Delete",true))return;
 db.restaurants.forEach(r=>{r.tags=(r.tags||[]).filter(t=>lc(t)!==lc(name))});db.tagCatalog=(db.tagCatalog||[]).filter(t=>lc(t)!==lc(name));save();tagState={};sugg=null;render()}
 function addCatalogTag(){let el=$("#newTag"),t=normTag(el.value);if(!t)return;if(catalogRows().some(x=>lc(x.name)===lc(t))){say(`“${t}” already exists.`);return}db.tagCatalog=[...catalog(),t];save();render()}
+const timeAgoLocal=ts=>{if(!ts)return"an unknown time";let s=(Date.now()-ts)/1000;if(s<90)return"moments ago";let m=s/60;if(m<90)return Math.round(m)+" min ago";let h=m/60;if(h<36)return Math.round(h)+" h ago";let d=h/24;return Math.round(d)+" day"+(Math.round(d)===1?"":"s")+" ago"};
+function overwriteBackupHtml(){let raw;try{raw=JSON.parse(localStorage.getItem("forkcastLastOverwritten")||"null")}catch(e){raw=null}
+ if(!raw?.db?.restaurants)return"";
+ return`<div class="card" id="owBackup"><h3>Backup from last sync conflict</h3><p class="small">When a device and the cloud disagreed, the side you didn't keep was saved here instead of being lost. This holds only the most recent one.</p>
+ <p class="muted">${raw.db.restaurants.length} restaurant${raw.db.restaurants.length===1?"":"s"}, from data last updated ${timeAgoLocal(raw.ts)} (saved ${timeAgoLocal(raw.savedAt)}).</p>
+ <div class="actions"><button class="primary" id="owRestore">Restore this</button><button class="secondary" id="owDismiss">Dismiss</button></div></div>`}
 function renderData(app){let n=db.restaurants.length,vis=db.restaurants.reduce((a,r)=>a+(r.visits||[]).length,0);
 let c=window.cloudState,time=t=>new Date(t).toLocaleString("en-GB",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
 let cloud=!c?`<p class="muted">Loading cloud backup …</p>`:!c.configured?`<p class="muted">Cloud backup is not set up: the Firebase config is missing in index.html.</p>`
 :!c.ready?`<p class="muted">${c.error?esc(c.error):"Connecting …"}</p>`
 :!c.user?`<p class="muted">Sign in once. After that, every change is backed up to your Google account automatically, so everything is back even on a new phone.</p><button class="primary" onclick="cloud.signIn()">Sign in with Google</button>`
 :`<p class="muted">Signed in as <strong>${esc(c.user.email)}</strong>. This is a shared backup: everyone allowed in the Firestore rules sees the same data.</p><p class="small">${c.status==="pending"?(navigator.onLine?"Backing up …":"Offline. Will back up once you’re online again."):c.status==="error"?"":c.last?"Last backup: "+time(c.last):""}</p><button class="secondary sm" onclick="cloud.signOut()">Sign out</button>`;
-app.innerHTML=statsHtml()+areasHtml()+tagsHtml()+`<div class="card"><h2>Cloud backup</h2>${cloud}${c?.error&&c.ready?`<p class="small warn">${esc(c.error)}</p>`:""}</div>
+app.innerHTML=statsHtml()+overwriteBackupHtml()+areasHtml()+tagsHtml()+`<div class="card"><h2>Cloud backup</h2>${cloud}${c?.error&&c.ready?`<p class="small warn">${esc(c.error)}</p>`:""}</div>
 <div class="card"><h2>Data</h2><p class="muted">${n} restaurant${n===1?"":"s"}, ${vis} visit${vis===1?"":"s"}.</p><p class="small" id="pstat"></p><p class="small">You can also export a backup file, e.g. straight to Google Drive.</p>
 <div class="actions"><button class="primary" onclick="exportData()">Export data</button><label class="secondary" style="display:inline-block;cursor:pointer">Import backup<input type="file" id="imp" accept=".json,application/json" style="display:none"></label></div></div>
 ${pendingImport?`<div class="card importbox" id="importBox"><h3>Import “${esc(pendingImport.name)}”</h3><p class="muted">${pendingImport.data.restaurants.length} restaurants in this backup. How should it be imported?</p><div class="actions"><button class="primary" onclick="doImport('merge')">Merge</button><button class="danger" onclick="doImport('replace')">Replace all</button><button class="secondary" onclick="pendingImport=null;render()">Cancel</button></div><p class="small" style="margin-top:8px"><b>Merge</b> adds new restaurants and visits and keeps everything you already have. <b>Replace all</b> deletes your current data first.</p></div>`:""}${importMsg?`<div class="card"><p class="small" style="margin:0;color:var(--herb)">${esc(importMsg)}</p></div>`:""}
 <div class="card"><h3>Reset</h3><p class="small">Clears the data on this device and signs you out of the cloud. Your cloud backup stays, so signing in again restores everything.</p><button class="danger" onclick="resetLocal()">Clear this device</button>${window.cloudState?.user?`<details class="wipe"><summary>Delete cloud backup permanently</summary><p class="small">This erases the copy in your Google account for good. It cannot be undone.</p><button class="dangerfill" onclick="wipeCloud()">Delete cloud backup</button></details>`:""}</div>`;
+$("#owRestore")&&($("#owRestore").onclick=async()=>{let raw=JSON.parse(localStorage.getItem("forkcastLastOverwritten"));
+ if(!await ask(`Replace your current ${db.restaurants.length} restaurants with the ${raw.db.restaurants.length} from this backup?`,"Restore",true))return;
+ window.app.replace(raw.db);localStorage.removeItem("forkcastLastOverwritten");render()});
+$("#owDismiss")&&($("#owDismiss").onclick=()=>{localStorage.removeItem("forkcastLastOverwritten");render()});
 $("#imp").onchange=importData;app.querySelectorAll("[data-aren]").forEach(b=>b.onclick=()=>renameArea(b.dataset.aren));app.querySelectorAll("[data-adel]").forEach(b=>b.onclick=()=>deleteArea(b.dataset.adel));$("#areaToggle")&&($("#areaToggle").onclick=()=>{areasExpanded=!areasExpanded;render();if(!areasExpanded)$("#areaCard").scrollIntoView({block:"start"})});$("#addArea")&&($("#addArea").onclick=addCatalogArea);$("#newArea")&&($("#newArea").onkeydown=e=>{if(e.key==="Enter")addCatalogArea()});app.querySelectorAll("[data-tren]").forEach(b=>b.onclick=()=>renameTag(b.dataset.tren));$("#tagToggle")&&($("#tagToggle").onclick=()=>{tagsExpanded=!tagsExpanded;render();if(!tagsExpanded)$("#tagCard").scrollIntoView({block:"start"})});$("#addTag").onclick=addCatalogTag;$("#newTag").onkeydown=e=>{if(e.key==="Enter")addCatalogTag()};app.querySelectorAll("[data-tdel]").forEach(b=>b.onclick=()=>deleteTag(b.dataset.tdel));navigator.storage?.persisted?.().then(p=>{let el=$("#pstat");if(el)el.textContent=p?"Storage is marked as persistent: Chrome won’t clear it when space runs low.":"Local storage isn’t marked as persistent. With cloud backup that’s not a problem."})}
 async function exportData(){let name="forkcast-backup-"+isoToday()+".json",json=JSON.stringify(db,null,2);
 try{let file=new File([json],name,{type:"application/json"});if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:name});return done()}}catch(e){if(e.name==="AbortError")return}
@@ -579,17 +591,31 @@ let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([json],{ty
 function done(){}}
 let pendingImport=null,importMsg="";
 function importData(e){let file=e.target.files[0];if(!file)return;let rd=new FileReader();rd.onload=()=>{try{let v=JSON.parse(rd.result);if(!Array.isArray(v.restaurants))throw 0;pendingImport={data:v,name:file.name};importMsg="";render();$("#importBox")?.scrollIntoView({block:"center"})}catch{say("This file isn’t a valid backup of this app.")}};rd.readAsText(file)}
+// Führt "source" additiv in "target" ein: neue Restaurants/Besuche/Tags kommen dazu, nichts wird gelöscht -
+// außer, ein Restaurant wurde auf irgendeiner Seite bewusst gelöscht (Merkliste), dann bleibt es gelöscht.
+function mergeDbs(target,source){
+ target.deletedRestaurants=target.deletedRestaurants||[];
+ let delIds=new Set(target.deletedRestaurants.map(x=>x.id));
+ (source.deletedRestaurants||[]).forEach(x=>{if(!delIds.has(x.id)){target.deletedRestaurants.push(x);delIds.add(x.id)}});
+ if(target.deletedRestaurants.length>300)target.deletedRestaurants=target.deletedRestaurants.slice(-300);
+ target.restaurants=target.restaurants.filter(r=>!delIds.has(r.id));                       // respektiert Löschungen von jeder Seite
+ let newR=0,newV=0;
+ const sameVisit=(a,b)=>a.id===b.id||(a.date===b.date&&a.rating===b.rating&&JSON.stringify((a.dishes||[]).map(d=>lc(d.name)))===JSON.stringify((b.dishes||[]).map(d=>lc(d.name))));
+ (source.restaurants||[]).forEach(ir=>{
+  if(delIds.has(ir.id))return;                                                             // nicht wiederbeleben, was gelöscht wurde
+  let r=target.restaurants.find(x=>x.id===ir.id)||target.restaurants.find(x=>lc(x.name)===lc(ir.name));
+  if(!r){if(target.restaurants.some(x=>x.id===ir.id))ir={...ir,id:uid()};target.restaurants.push(JSON.parse(JSON.stringify(ir)));newR++;newV+=(ir.visits||[]).length;return}
+  (ir.visits||[]).forEach(iv=>{if(!(r.visits||[]).some(x=>sameVisit(x,iv))){(r.visits??=[]).push(r.visits.some(x=>x.id===iv.id)?{...iv,id:uid()}:iv);newV++}});
+  (ir.tags||[]).forEach(t=>{if(!(r.tags??=[]).some(x=>lc(x)===lc(t)))r.tags.push(t)});
+  if(!r.link&&ir.link)r.link=ir.link;if(!r.note&&ir.note)r.note=ir.note;if(!r.closed?.length&&ir.closed?.length)r.closed=ir.closed;
+  if(!r.props?.length&&ir.props?.length)r.props=ir.props;if(!r.area&&ir.area)r.area=ir.area});
+ if(Array.isArray(source.tagCatalog)){target.tagCatalog=target.tagCatalog||[];source.tagCatalog.forEach(t=>{if(!target.tagCatalog.some(x=>lc(x)===lc(t)))target.tagCatalog.push(t)})}
+ if(Array.isArray(source.areaCatalog)){target.areaCatalog=target.areaCatalog||[];source.areaCatalog.forEach(a=>{if(!target.areaCatalog.some(x=>lc(x)===lc(a)))target.areaCatalog.push(a)})}
+ return{newR,newV}}
+window.mergeDbs=mergeDbs;
 async function doImport(mode){let v=pendingImport?.data;if(!v)return;
  if(mode==="replace"){if(!await ask("Replace all current data with this backup?","Replace all",true))return;db=v;importMsg=`Replaced with ${v.restaurants.length} restaurants from the backup.`}
- else{let newR=0,newV=0;const sameVisit=(a,b)=>a.id===b.id||(a.date===b.date&&a.rating===b.rating&&JSON.stringify((a.dishes||[]).map(d=>lc(d.name)))===JSON.stringify((b.dishes||[]).map(d=>lc(d.name))));
-  v.restaurants.forEach(ir=>{let r=db.restaurants.find(x=>x.id===ir.id)||db.restaurants.find(x=>lc(x.name)===lc(ir.name));
-   if(!r){if(db.restaurants.some(x=>x.id===ir.id))ir={...ir,id:uid()};db.restaurants.push(ir);newR++;newV+=(ir.visits||[]).length;return}
-   (ir.visits||[]).forEach(iv=>{if(!(r.visits||[]).some(x=>sameVisit(x,iv))){(r.visits??=[]).push(r.visits.some(x=>x.id===iv.id)?{...iv,id:uid()}:iv);newV++}});
-   (ir.tags||[]).forEach(t=>{if(!(r.tags??=[]).some(x=>lc(x)===lc(t)))r.tags.push(t)});
-   if(!r.link&&ir.link)r.link=ir.link;if(!r.note&&ir.note)r.note=ir.note;if(!r.closed?.length&&ir.closed?.length)r.closed=ir.closed;
-   if(!r.props?.length&&ir.props?.length)r.props=ir.props});
-  if(Array.isArray(v.tagCatalog)){ensureCatalog();v.tagCatalog.forEach(t=>{if(!db.tagCatalog.some(x=>lc(x)===lc(t)))db.tagCatalog.push(t)})}
-  importMsg=`Merged: ${newR} new restaurant${newR===1?"":"s"}, ${newV} new visit${newV===1?"":"s"}. Existing entries were kept.`}
+ else{ensureCatalog();let{newR,newV}=mergeDbs(db,v);importMsg=`Merged: ${newR} new restaurant${newR===1?"":"s"}, ${newV} new visit${newV===1?"":"s"}. Existing entries were kept.`}
  pendingImport=null;migrateTags();ensureCatalog();ensureAreaCatalog();save();sugg=null;tagState={};render()}
 async function resetLocal(){if(!await ask("Clear all data on this device? Your cloud backup will not be touched, and signing in again restores it.","Clear device",true))return;
  db={restaurants:[],tagCatalog:[...PRESET_TAGS],areaCatalog:[]};writeLocal();sugg=null;tagState={};currentArea=null;
@@ -624,6 +650,8 @@ async function start(){
   const fs=F.initializeFirestore(fb,{localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()})});
   let ref=null,unsub=null,timer=null;
   const ok=()=>{st.status="ok";st.last=Date.now();st.error=""};
+function timeAgo(ts){if(!ts)return"an unknown time";let s=(Date.now()-ts)/1000;if(s<90)return"moments ago";let m=s/60;if(m<90)return Math.round(m)+" min ago";let h=m/60;if(h<36)return Math.round(h)+" h ago";let d=h/24;return Math.round(d)+" day"+(Math.round(d)===1?"":"s")+" ago"}
+function stash(discardedDb,ts){try{localStorage.setItem("forkcastLastOverwritten",JSON.stringify({db:discardedDb,ts,savedAt:Date.now()}))}catch(e){}}
   async function write(){if(!ref)return;const db=window.app.get();st.status="pending";upd();
     try{await F.setDoc(ref,{data:JSON.stringify(db),updatedAt:db.updatedAt||Date.now()});ok()}catch(e){st.status="error";st.error=msg(e)}upd()}
   window.cloud={
@@ -643,19 +671,19 @@ async function start(){
   A.getRedirectResult(auth).catch(e=>{st.error=msg(e);upd()});
   A.onAuthStateChanged(auth,user=>{unsub?.();unsub=null;ref=null;st.user=user?{email:user.email,uid:user.uid}:null;st.status="idle";
     if(user){ref=F.doc(fs,"shared","forkcast");st.status="pending";
-      unsub=F.onSnapshot(ref,async snap=>{
+unsub=F.onSnapshot(ref,async snap=>{
         if(snap.metadata.hasPendingWrites)return;                  // eigene, noch nicht bestätigte Änderung
-        const local=window.app.get(),lt=local.updatedAt||0,first=localStorage.getItem("forkcastSyncedShared")!=="1";
-        localStorage.setItem("forkcastSyncedShared","1");
-        if(!snap.exists()){local.restaurants.length?write():(ok(),upd());return}       // erste Anmeldung: lokale Daten hochladen
+        const local=window.app.get();
+        if(!snap.exists()){local.restaurants.length?write():(ok(),upd());return}       // Cloud-Dokument existiert noch nicht: lokale Daten hochladen
         const r=snap.data();let remote;try{remote=JSON.parse(r.data)}catch{st.status="error";st.error="Cloud data is corrupted.";upd();return}
-        const rt=r.updatedAt||0;
-        if(first&&local.restaurants.length&&remote.restaurants?.length&&r.data!==JSON.stringify(local)){
-          if(await window.ask(`There is already data in the cloud (${remote.restaurants.length} restaurants) and on this device (${local.restaurants.length}). Which should be kept?`,"Use cloud data",false,"Upload this device")){window.app.replace(remote);ok()}
-          else{window.app.touch();write();return}
-        }else if(rt>lt){window.app.replace(remote);ok()}          // Cloud ist neuer (z. B. neues Handy)
-        else if(rt<lt){write();return}                              // Gerät ist neuer (z. B. offline geändert)
-        else ok();
+        if(r.data===JSON.stringify(local)){ok();upd();return}                          // schon identisch, nichts zu tun
+        // Immer zusammenführen statt zu überschreiben: neue Einträge von beiden Seiten bleiben erhalten, nur bewusste Löschungen setzen sich durch.
+        let merged=JSON.parse(JSON.stringify(local));
+        window.mergeDbs(merged,remote);
+        if(local.restaurants.some(x=>!merged.restaurants.some(y=>y.id===x.id)))stash(local,local.updatedAt||0);  // etwas verschwindet gerade (anderswo gelöscht): Sicherheitsnetz
+        merged.updatedAt=Date.now();
+        window.app.replace(merged);ok();
+        write();                                                                       // zusammengeführten Stand auch für das andere Gerät sichtbar machen
         upd()},e=>{st.status="error";st.error=msg(e);upd()})}
     upd()});
 }
