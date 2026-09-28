@@ -680,10 +680,14 @@ unsub=F.onSnapshot(ref,async snap=>{
         // Immer zusammenführen statt zu überschreiben: neue Einträge von beiden Seiten bleiben erhalten, nur bewusste Löschungen setzen sich durch.
         let merged=JSON.parse(JSON.stringify(local));
         window.mergeDbs(merged,remote);
-        if(local.restaurants.some(x=>!merged.restaurants.some(y=>y.id===x.id)))stash(local,local.updatedAt||0);  // etwas verschwindet gerade (anderswo gelöscht): Sicherheitsnetz
-        merged.updatedAt=Date.now();
-        window.app.replace(merged);ok();
-        write();                                                                       // zusammengeführten Stand auch für das andere Gerät sichtbar machen
+        const changed=JSON.stringify(merged)!==JSON.stringify(local);                  // bekommt DIESES Gerät durch den Merge wirklich etwas Neues?
+        if(changed){
+          if(local.restaurants.some(x=>!merged.restaurants.some(y=>y.id===x.id)))stash(local,local.updatedAt||0);  // etwas verschwindet gerade (anderswo gelöscht): Sicherheitsnetz
+          merged.updatedAt=Date.now();
+          window.app.replace(merged)                                                   // nur bei echter Änderung neu rendern (sonst verschwinden z. B. gerade gezeigte Vorschläge grundlos)
+        }
+        ok();
+        write();                                                                       // eigenen (ggf. schon voraus liegenden) Stand auch für das andere Gerät sichtbar machen
         upd()},e=>{st.status="error";st.error=msg(e);upd()})}
     upd()});
 }
