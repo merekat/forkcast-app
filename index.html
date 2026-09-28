@@ -566,7 +566,7 @@ let c=window.cloudState,time=t=>new Date(t).toLocaleString("en-GB",{day:"2-digit
 let cloud=!c?`<p class="muted">Loading cloud backup …</p>`:!c.configured?`<p class="muted">Cloud backup is not set up: the Firebase config is missing in index.html.</p>`
 :!c.ready?`<p class="muted">${c.error?esc(c.error):"Connecting …"}</p>`
 :!c.user?`<p class="muted">Sign in once. After that, every change is backed up to your Google account automatically, so everything is back even on a new phone.</p><button class="primary" onclick="cloud.signIn()">Sign in with Google</button>`
-:`<p class="muted">Signed in as <strong>${esc(c.user.email)}</strong>. Changes are backed up automatically.</p><p class="small">${c.status==="pending"?(navigator.onLine?"Backing up …":"Offline. Will back up once you’re online again."):c.status==="error"?"":c.last?"Last backup: "+time(c.last):""}</p><button class="secondary sm" onclick="cloud.signOut()">Sign out</button>`;
+:`<p class="muted">Signed in as <strong>${esc(c.user.email)}</strong>. This is a shared backup: everyone allowed in the Firestore rules sees the same data.</p><p class="small">${c.status==="pending"?(navigator.onLine?"Backing up …":"Offline. Will back up once you’re online again."):c.status==="error"?"":c.last?"Last backup: "+time(c.last):""}</p><button class="secondary sm" onclick="cloud.signOut()">Sign out</button>`;
 app.innerHTML=statsHtml()+areasHtml()+tagsHtml()+`<div class="card"><h2>Cloud backup</h2>${cloud}${c?.error&&c.ready?`<p class="small warn">${esc(c.error)}</p>`:""}</div>
 <div class="card"><h2>Data</h2><p class="muted">${n} restaurant${n===1?"":"s"}, ${vis} visit${vis===1?"":"s"}.</p><p class="small" id="pstat"></p><p class="small">You can also export a backup file, e.g. straight to Google Drive.</p>
 <div class="actions"><button class="primary" onclick="exportData()">Export data</button><label class="secondary" style="display:inline-block;cursor:pointer">Import backup<input type="file" id="imp" accept=".json,application/json" style="display:none"></label></div></div>
@@ -642,11 +642,11 @@ async function start(){
   st.ready=true;upd();
   A.getRedirectResult(auth).catch(e=>{st.error=msg(e);upd()});
   A.onAuthStateChanged(auth,user=>{unsub?.();unsub=null;ref=null;st.user=user?{email:user.email,uid:user.uid}:null;st.status="idle";
-    if(user){ref=F.doc(fs,"users",user.uid,"data","main");st.status="pending";
+    if(user){ref=F.doc(fs,"shared","forkcast");st.status="pending";
       unsub=F.onSnapshot(ref,async snap=>{
         if(snap.metadata.hasPendingWrites)return;                  // eigene, noch nicht bestätigte Änderung
-        const local=window.app.get(),lt=local.updatedAt||0,first=localStorage.getItem("wohinEssenSyncUid")!==user.uid;
-        localStorage.setItem("wohinEssenSyncUid",user.uid);
+        const local=window.app.get(),lt=local.updatedAt||0,first=localStorage.getItem("forkcastSyncedShared")!=="1";
+        localStorage.setItem("forkcastSyncedShared","1");
         if(!snap.exists()){local.restaurants.length?write():(ok(),upd());return}       // erste Anmeldung: lokale Daten hochladen
         const r=snap.data();let remote;try{remote=JSON.parse(r.data)}catch{st.status="error";st.error="Cloud data is corrupted.";upd();return}
         const rt=r.updatedAt||0;
