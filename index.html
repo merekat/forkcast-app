@@ -193,7 +193,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <main id="app"></main>
 <script>
 const KEY="wohinEssenV1";
-const APP_VERSION="2026-09-29e";
+const APP_VERSION="2026-09-29f";
 let db=load(),stack=[{tab:"today"}],tagState={},sugg=null,listQuery="",listSort="oldest",currentArea=null;
 
 function load(){try{let v=JSON.parse(localStorage.getItem(KEY)||"null");if(v&&Array.isArray(v.restaurants))return v}catch(e){}return{restaurants:[]}}
@@ -605,6 +605,21 @@ let pendingImport=null,importMsg="";
 function importData(e){let file=e.target.files[0];if(!file)return;let rd=new FileReader();rd.onload=()=>{try{let v=JSON.parse(rd.result);if(!Array.isArray(v.restaurants))throw 0;pendingImport={data:v,name:file.name};importMsg="";render();$("#importBox")?.scrollIntoView({block:"center"})}catch{say("This file isn’t a valid backup of this app.")}};rd.readAsText(file)}
 // Führt "source" additiv in "target" ein: neue Restaurants/Besuche/Tags kommen dazu, nichts wird gelöscht -
 // außer, ein Restaurant wurde auf irgendeiner Seite bewusst gelöscht (Merkliste), dann bleibt es gelöscht.
+const contentOf=o=>{const c={...o};delete c.updatedAt;return canon(c)};
+window.canon=canon;window.contentOf=contentOf;
+function canon(v){
+ if(Array.isArray(v))return"["+v.map(x=>x===undefined?"null":canon(x)).join(",")+"]";
+ if(v&&typeof v==="object"){return"{"+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+":"+canon(v[k])).join(",")+"}"}
+ return JSON.stringify(v)}
+// Fehlende Felder zu leeren Werten vereinheitlichen: sonst zählt "Feld fehlt" anders als "Feld ist leer",
+// und eine geleerte Notiz würde beim Abgleich nie übernommen.
+const normR=o=>{o.name=o.name??"";o.tags=Array.isArray(o.tags)?o.tags:[];o.link=o.link??"";o.note=o.note??"";
+ o.closed=Array.isArray(o.closed)?o.closed:[];o.props=Array.isArray(o.props)?o.props:[];return o};
+// Vergleichsform der bearbeitbaren Felder (Reihenfolge-unabhängig). Der Ort wird getrennt behandelt,
+// weil er Pflicht ist und niemals versehentlich geleert werden darf.
+function fieldSig(o){return canon({name:o.name??"",tags:[...(o.tags||[])].sort(),link:o.link??"",note:o.note??"",
+ closed:[...(o.closed||[])].sort((a,b)=>a-b),props:[...(o.props||[])].sort()})}
+const mergeArea=(x,y)=>!x?(y||""):!y?x:(x<y?x:y);        // symmetrisch: auf beiden Geräten dasselbe Ergebnis
 function mergeDbs(target,source){
  target.deletedVisits=target.deletedVisits||[];
  let delVisitIds=new Set(target.deletedVisits.map(x=>x.vid));
@@ -627,10 +642,17 @@ function mergeDbs(target,source){
   if(delIds.has(ir.id))return;                                                             // nicht wiederbeleben, was gelöscht wurde
   let r=target.restaurants.find(x=>x.id===ir.id)||target.restaurants.find(x=>lc(x.name)===lc(ir.name));
   if(!r){if(target.restaurants.some(x=>x.id===ir.id))ir={...ir,id:uid()};target.restaurants.push(JSON.parse(JSON.stringify(ir)));newR++;newV+=(ir.visits||[]).length;return}
-  (ir.visits||[]).forEach(iv=>{if(!(r.visits||[]).some(x=>sameVisit(x,iv))){(r.visits??=[]).push(r.visits.some(x=>x.id===iv.id)?{...iv,id:uid()}:iv);newV++}});
-  if((ir.updatedAt||0)>(r.updatedAt||0)){                                                  // neuere Bearbeitung gewinnt komplett (Löschen von Tags/Notiz/etc. setzt sich so durch)
-   r.name=ir.name??r.name;r.tags=Array.isArray(ir.tags)?[...ir.tags]:r.tags;r.link=ir.link??r.link;r.note=ir.note??r.note;
-   r.closed=Array.isArray(ir.closed)?[...ir.closed]:r.closed;r.props=Array.isArray(ir.props)?[...ir.props]:r.props;r.area=ir.area||r.area;r.updatedAt=ir.updatedAt}});
+  (ir.visits||[]).forEach(iv=>{let ex=(r.visits||[]).find(x=>sameVisit(x,iv));
+   if(!ex){(r.visits??=[]).push(r.visits.some(x=>x.id===iv.id)?{...iv,id:uid()}:iv);newV++;return}
+   if(canon(iv)<canon(ex))Object.assign(ex,JSON.parse(JSON.stringify(iv)))});      // auch hier fest entscheiden, statt beide Fassungen stehen zu lassen
+  normR(r);normR(ir);
+  const tm=r.updatedAt||0,tt=ir.updatedAt||0,sm=fieldSig(r),ss=fieldSig(ir);
+  // Neuere Bearbeitung gewinnt komplett. Ohne verwertbaren Zeitstempel entscheidet ein fester, auf beiden
+  // Geräten identischer Vergleich - sonst behält jede Seite ihre Fassung und der Abgleich endet nie.
+  if(sm!==ss&&(tt>tm||(tt===tm&&ss<sm))){
+   r.name=ir.name;r.tags=[...ir.tags];r.link=ir.link;r.note=ir.note;
+   r.closed=[...ir.closed];r.props=[...ir.props];r.updatedAt=Math.max(tm,tt)||undefined}
+  r.area=mergeArea(r.area,ir.area)});
  if(Array.isArray(source.tagCatalog)){target.tagCatalog=target.tagCatalog||[];source.tagCatalog.forEach(t=>{if(!delTagNames.has(lc(t))&&!target.tagCatalog.some(x=>lc(x)===lc(t)))target.tagCatalog.push(t)})}
  target.tagCatalog=(target.tagCatalog||[]).filter(t=>!delTagNames.has(lc(t)));
  if(Array.isArray(source.areaCatalog)){target.areaCatalog=target.areaCatalog||[];source.areaCatalog.forEach(a=>{if(!delAreaNames.has(lc(a))&&!target.areaCatalog.some(x=>lc(x)===lc(a)))target.areaCatalog.push(a)})}
@@ -641,7 +663,9 @@ function mergeDbs(target,source){
  target.restaurants.forEach(r=>{
   if(r.visits){r.visits.sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
    r.visits.forEach(v=>{if(v.dishes)v.dishes.sort((a,b)=>{let n=lc(a.name).localeCompare(lc(b.name));return n||lc(a.no||"").localeCompare(lc(b.no||""))})})}
-  if(r.tags)r.tags.sort((a,b)=>lc(a)<lc(b)?-1:lc(a)>lc(b)?1:0)                              // sonst dieselbe Ping-Pong-Gefahr wie oben, nur pro Restaurant
+  if(r.tags)r.tags.sort((a,b)=>lc(a)<lc(b)?-1:lc(a)>lc(b)?1:0);                             // sonst dieselbe Ping-Pong-Gefahr wie oben, nur pro Restaurant
+  normR(r);r.props.sort();
+  if(r.closed)r.closed.sort((a,b)=>a-b)
 });
 target.restaurants.forEach(r=>{if(r.visits)r.visits=r.visits.filter(v=>!delVisitIds.has(v.id))});   // gelöschte Besuche (und damit Bewertungen) bleiben gelöscht, egal welche Seite sie noch kennt
  target.deletedRestaurants.sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
@@ -696,11 +720,7 @@ async function start(){
 // Zwei Geräte mit inhaltlich identischen Daten erzeugen sonst leicht unterschiedlichen Text, nur weil ein
 // Feld beim einen vor, beim anderen nach einem anderen gesetzt wurde - das reicht sonst für einen Endlos-Abgleich.
 // Die Reihenfolge INNERHALB von Arrays bleibt unverändert, die wird an anderer Stelle bewusst sortiert.
-const contentOf=o=>{const c={...o};delete c.updatedAt;return canon(c)};
-function canon(v){
- if(Array.isArray(v))return"["+v.map(x=>x===undefined?"null":canon(x)).join(",")+"]";
- if(v&&typeof v==="object"){return"{"+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+":"+canon(v[k])).join(",")+"}"}
- return JSON.stringify(v)}
+
 function timeAgo(ts){if(!ts)return"an unknown time";let s=(Date.now()-ts)/1000;if(s<90)return"moments ago";let m=s/60;if(m<90)return Math.round(m)+" min ago";let h=m/60;if(h<36)return Math.round(h)+" h ago";let d=h/24;return Math.round(d)+" day"+(Math.round(d)===1?"":"s")+" ago"}
   async function write(){if(!ref)return;const db=window.app.get(),myId=++writeSeq;st.status="pending";upd();
     // Firestore lässt ein setDoc() im Offline-Fall bewusst unbeantwortet, bis wieder eine Verbindung besteht -
