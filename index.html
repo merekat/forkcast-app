@@ -688,10 +688,15 @@ async function start(){
   const fs=F.initializeFirestore(fb,{localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()})});
   let ref=null,unsub=null,timer=null,writeSeq=0;
   const ok=()=>{st.status="ok";st.last=Date.now();st.error=""};
-function canon(o){const known=["restaurants","deletedRestaurants","deletedVisits","deletedTags","deletedAreas","tagCatalog","areaCatalog","updatedAt"],out={};
- known.forEach(k=>{if(o[k]!==undefined)out[k]=o[k]});
- Object.keys(o).filter(k=>!known.includes(k)).sort().forEach(k=>out[k]=o[k]);
- return JSON.stringify(out)}
+// Kanonische Serialisierung: sortiert Objektschlüssel auf JEDER Verschachtelungsebene, nicht nur ganz oben.
+// Zwei Geräte mit inhaltlich identischen Daten erzeugen sonst leicht unterschiedlichen Text, nur weil ein
+// Feld beim einen vor, beim anderen nach einem anderen gesetzt wurde - das reicht sonst für einen Endlos-Abgleich.
+// Die Reihenfolge INNERHALB von Arrays bleibt unverändert, die wird an anderer Stelle bewusst sortiert.
+const contentOf=o=>{const c={...o};delete c.updatedAt;return canon(c)};
+function canon(v){
+ if(Array.isArray(v))return"["+v.map(x=>x===undefined?"null":canon(x)).join(",")+"]";
+ if(v&&typeof v==="object"){return"{"+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+":"+canon(v[k])).join(",")+"}"}
+ return JSON.stringify(v)}
 function timeAgo(ts){if(!ts)return"an unknown time";let s=(Date.now()-ts)/1000;if(s<90)return"moments ago";let m=s/60;if(m<90)return Math.round(m)+" min ago";let h=m/60;if(h<36)return Math.round(h)+" h ago";let d=h/24;return Math.round(d)+" day"+(Math.round(d)===1?"":"s")+" ago"}
   async function write(){if(!ref)return;const db=window.app.get(),myId=++writeSeq;st.status="pending";upd();
     // Firestore lässt ein setDoc() im Offline-Fall bewusst unbeantwortet, bis wieder eine Verbindung besteht -
@@ -723,17 +728,18 @@ unsub=F.onSnapshot(ref,async snap=>{
         const local=window.app.get();
         if(!snap.exists()){local.restaurants.length?write():(ok(),upd());return}       // Cloud-Dokument existiert noch nicht: lokale Daten hochladen
         const r=snap.data();let remote;try{remote=JSON.parse(r.data)}catch{st.status="error";st.error="Cloud data is corrupted.";upd();return}
-        if(r.data===canon(local)){ok();upd();return}                          // schon identisch, nichts zu tun
+        if(contentOf(remote)===contentOf(local)){ok();upd();return}           // inhaltlich gleich: nichts tun, auch wenn die Zeitstempel abweichen
         // Immer zusammenführen statt zu überschreiben: neue Einträge von beiden Seiten bleiben erhalten, nur bewusste Löschungen setzen sich durch.
         let merged=JSON.parse(JSON.stringify(local));
         window.mergeDbs(merged,remote);
-        const changed=canon(merged)!==canon(local);                  // bekommt DIESES Gerät durch den Merge wirklich etwas Neues?
-        if(changed){
+        const gainedHere=contentOf(merged)!==contentOf(local);        // bekommt DIESES Gerät etwas Neues?
+        const cloudLacks=contentOf(merged)!==contentOf(remote);       // fehlt der Cloud etwas?
+        if(gainedHere){
           merged.updatedAt=Date.now();
           window.app.replace(merged)                                                   // nur bei echter Änderung neu rendern (sonst verschwinden z. B. gerade gezeigte Vorschläge grundlos)
         }
         ok();
-        write();                                                                       // eigenen (ggf. schon voraus liegenden) Stand auch für das andere Gerät sichtbar machen
+        if(cloudLacks)write();                                                         // nur schreiben, wenn die Cloud wirklich etwas nicht hat - sonst Endlosschleife zwischen zwei Geräten
         upd()
         }catch(e){st.status="error";st.error="Sync hit an unexpected snag: "+(e?.message||e);upd()}       // nie stumm hängen bleiben: jeder Fehler wird sichtbar
       },e=>{st.status="error";st.error=msg(e);upd()})}
