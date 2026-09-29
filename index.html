@@ -193,6 +193,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <main id="app"></main>
 <script>
 const KEY="wohinEssenV1";
+const APP_VERSION="2026-09-29e";
 let db=load(),stack=[{tab:"today"}],tagState={},sugg=null,listQuery="",listSort="oldest",currentArea=null;
 
 function load(){try{let v=JSON.parse(localStorage.getItem(KEY)||"null");if(v&&Array.isArray(v.restaurants))return v}catch(e){}return{restaurants:[]}}
@@ -594,7 +595,7 @@ app.innerHTML=statsHtml()+areasHtml()+tagsHtml()+`<div class="card"><h2>Cloud ba
 <div class="card"><h2>Data</h2><p class="muted">${n} restaurant${n===1?"":"s"}, ${vis} visit${vis===1?"":"s"}.</p><p class="small" id="pstat"></p><p class="small">You can also export a backup file, e.g. straight to Google Drive.</p>
 <div class="actions"><button class="primary" onclick="exportData()">Export data</button><label class="secondary" style="display:inline-block;cursor:pointer">Import backup<input type="file" id="imp" accept=".json,application/json" style="display:none"></label></div></div>
 ${pendingImport?`<div class="card importbox" id="importBox"><h3>Import “${esc(pendingImport.name)}”</h3><p class="muted">${pendingImport.data.restaurants.length} restaurants in this backup. How should it be imported?</p><div class="actions"><button class="primary" onclick="doImport('merge')">Merge</button><button class="danger" onclick="doImport('replace')">Replace all</button><button class="secondary" onclick="pendingImport=null;render()">Cancel</button></div><p class="small" style="margin-top:8px"><b>Merge</b> adds new restaurants and visits and keeps everything you already have. <b>Replace all</b> deletes your current data first.</p></div>`:""}${importMsg?`<div class="card"><p class="small" style="margin:0;color:var(--herb)">${esc(importMsg)}</p></div>`:""}
-<div class="card"><h3>Reset</h3><p class="small">Clears the data on this device and signs you out of the cloud. Your cloud backup stays, so signing in again restores everything.</p><button class="danger" onclick="resetLocal()">Clear this device</button>${window.cloudState?.user?`<details class="wipe"><summary>Delete cloud backup permanently</summary><p class="small">This erases the copy in your Google account for good. It cannot be undone.</p><button class="dangerfill" onclick="wipeCloud()">Delete cloud backup</button></details>`:""}</div>`;
+<div class="card"><h3>Reset</h3><p class="small">App version <strong>${APP_VERSION}</strong> — this must match on all your devices.</p><p class="small">Clears the data on this device and signs you out of the cloud. Your cloud backup stays, so signing in again restores everything.</p><button class="danger" onclick="resetLocal()">Clear this device</button>${window.cloudState?.user?`<details class="wipe"><summary>Delete cloud backup permanently</summary><p class="small">This erases the copy in your Google account for good. It cannot be undone.</p><button class="dangerfill" onclick="wipeCloud()">Delete cloud backup</button></details>`:""}</div>`;
 $("#imp").onchange=importData;app.querySelectorAll("[data-aren]").forEach(b=>b.onclick=()=>renameArea(b.dataset.aren));app.querySelectorAll("[data-adel]").forEach(b=>b.onclick=()=>deleteArea(b.dataset.adel));$("#areaToggle")&&($("#areaToggle").onclick=()=>{areasExpanded=!areasExpanded;render();if(!areasExpanded)$("#areaCard").scrollIntoView({block:"start"})});$("#addArea")&&($("#addArea").onclick=addCatalogArea);$("#newArea")&&($("#newArea").onkeydown=e=>{if(e.key==="Enter")addCatalogArea()});app.querySelectorAll("[data-tren]").forEach(b=>b.onclick=()=>renameTag(b.dataset.tren));$("#tagToggle")&&($("#tagToggle").onclick=()=>{tagsExpanded=!tagsExpanded;render();if(!tagsExpanded)$("#tagCard").scrollIntoView({block:"start"})});$("#addTag").onclick=addCatalogTag;$("#newTag").onkeydown=e=>{if(e.key==="Enter")addCatalogTag()};app.querySelectorAll("[data-tdel]").forEach(b=>b.onclick=()=>deleteTag(b.dataset.tdel));navigator.storage?.persisted?.().then(p=>{let el=$("#pstat");if(el)el.textContent=p?"Storage is marked as persistent: Chrome won’t clear it when space runs low.":"Local storage isn’t marked as persistent. With cloud backup that’s not a problem."})}
 async function exportData(){let name="forkcast-backup-"+isoToday()+".json",json=JSON.stringify(db,null,2);
 try{let file=new File([json],name,{type:"application/json"});if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:name});return done()}}catch(e){if(e.name==="AbortError")return}
@@ -686,7 +687,10 @@ async function start(){
   const [{initializeApp},A,F]=await Promise.all([import(U("app")),import(U("auth")),import(U("firestore"))]);
   const fb=initializeApp(FIREBASE_CONFIG),auth=A.getAuth(fb);
   const fs=F.initializeFirestore(fb,{localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()})});
-  let ref=null,unsub=null,timer=null,writeSeq=0;
+  let ref=null,unsub=null,timer=null,writeSeq=0,syncWrites=[];
+  // Bremse: Schreibt der Abgleich wiederholt, ohne dass dieses Gerät je etwas dazugewinnt,
+  // hält vermutlich ein anderes Gerät mit einer älteren App-Version dagegen -> Schleife stoppen und erklären.
+  function loopDetected(){const now=Date.now();syncWrites=syncWrites.filter(t=>now-t<20000);syncWrites.push(now);return syncWrites.length>8}
   const ok=()=>{st.status="ok";st.last=Date.now();st.error=""};
 // Kanonische Serialisierung: sortiert Objektschlüssel auf JEDER Verschachtelungsebene, nicht nur ganz oben.
 // Zwei Geräte mit inhaltlich identischen Daten erzeugen sonst leicht unterschiedlichen Text, nur weil ein
@@ -739,7 +743,10 @@ unsub=F.onSnapshot(ref,async snap=>{
           window.app.replace(merged)                                                   // nur bei echter Änderung neu rendern (sonst verschwinden z. B. gerade gezeigte Vorschläge grundlos)
         }
         ok();
-        if(cloudLacks)write();                                                         // nur schreiben, wenn die Cloud wirklich etwas nicht hat - sonst Endlosschleife zwischen zwei Geräten
+        if(cloudLacks){
+          if(!gainedHere&&loopDetected()){st.status="error";st.error="Sync loop stopped. Another signed-in device is most likely running an older version of the app. Reload the app on every device (close and reopen it), then sign in again.";upd();return}
+          write()                                                                          // nur schreiben, wenn die Cloud wirklich etwas nicht hat
+        }
         upd()
         }catch(e){st.status="error";st.error="Sync hit an unexpected snag: "+(e?.message||e);upd()}       // nie stumm hängen bleiben: jeder Fehler wird sichtbar
       },e=>{st.status="error";st.error=msg(e);upd()})}
