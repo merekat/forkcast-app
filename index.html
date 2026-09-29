@@ -202,7 +202,7 @@ function save(){db.updatedAt=Date.now();writeLocal();window.cloud?.push()}
 window.app={get:()=>db,
  replace(v){if(!v||!Array.isArray(v.restaurants))return;db=v;writeLocal();migrateTags();ensureCatalog();ensureAreaCatalog();sugg=null;render()},
  touch(){db.updatedAt=Date.now();writeLocal()},
- cloudChanged(){let c=window.cloudState,d=$("#cloudDot");if(d)d.hidden=!(c?.configured&&c.ready&&!!c.error)
+ cloudChanged(){let c=window.cloudState,d=$("#cloudDot");if(d)d.hidden=!(c?.configured&&c.ready&&(!!c.error||c.status==="stalled"))
   if(cur().tab==="data"&&!cur().view)render()}};
 const $=s=>document.querySelector(s);
 // Eigene Dialoge statt confirm/alert/prompt (die werden in manchen Umgebungen blockiert)
@@ -322,6 +322,7 @@ function renderHeaderArea(){let hdr=$("#hdrArea");if(!hdr)return;let areas=usedA
  if(!areas.length){hdr.innerHTML="";return}
  hdr.innerHTML=areas.length>1?`<button class="areapick" id="areaPick" aria-haspopup="listbox">${PINMINI}<span>${esc(area)}</span></button>`:`<span class="areapick static">${PINMINI}<span>${esc(areas[0])}</span></span>`;
  let ap=$("#areaPick");if(ap)ap.onclick=()=>openAreaMenu(ap,areas,area,a=>{currentArea=a;sugg&&(sugg=suggest());render()})}
+let tagResizeT=null;addEventListener("resize",()=>{clearTimeout(tagResizeT);tagResizeT=setTimeout(()=>{if(cur().tab==="today"&&!cur().view)renderToday($("#app"))},200)});
 function suggest(exclude=[],n=5){let pref=[],excl=[],skip=new Set([...skippedToday(),...exclude]),area=pickArea();for(let[k,s]of Object.entries(tagState)){if(s===1)pref.push(k);if(s===-1)excl.push(k)}
 let wd=weekday(isoToday()),closed=0,pool=[];
 db.restaurants.forEach(r=>{if(skip.has(r.id))return;if(!r.area)return;let tl=(r.tags||[]).map(lc);if(tl.some(t=>excl.includes(t)))return;if((r.closed||[]).includes(wd)){closed++;return}
@@ -355,7 +356,15 @@ function openAreaMenu(anchor,areas,cur,onPick){document.querySelector(".areamenu
  m.onclick=e=>{let b=e.target.closest("[data-a]");if(b){onPick(b.dataset.a);close()}}}
 const CHK='<svg class="chk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>';
 function chipHtml(t,top){let k=lc(t.name),s=tagState[k]||0;return`<button class="chip ${s===1?"pref":s===-1?"excl":""} ${top&&popTag===k?"pop":""}" data-tag="${esc(k)}">${s===1?"✓ ":s===-1?"✕ ":""}${esc(t.name)}</button>`}
-function pickerHtml(tags){let sel=Object.keys(tagState).filter(k=>tagState[k]).map(k=>tags.find(t=>lc(t.name)===k)).filter(Boolean),rest=tags,pages=[]; /* Slider enthält immer alle Tags: kein Umbrechen, kein Springen */for(let i=0;i<rest.length;i+=PAGE)pages.push(rest.slice(i,i+PAGE));
+// EINE Seite mit ALLEN Tags, zum Ausmessen der tatsächlichen Zeilenumbrüche (unsichtbar, wird sofort ersetzt)
+function measurePickerHtml(tags){return`<div class="slider"><div class="spage" id="tagMeasure">${tags.map(t=>chipHtml(t,false)).join("")}</div></div>`}
+// Teilt "tags" anhand der ECHTEN, gemessenen Zeilenumbrüche in Seiten zu je maxRows Zeilen auf
+function computeTagPages(app,tags,maxRows){let box=app.querySelector("#tagMeasure");if(!box||!box.children.length)return[tags];
+ let rowStarts=[0],lastTop=box.children[0].offsetTop;
+ [...box.children].forEach((el,i)=>{if(i===0)return;if(el.offsetTop>lastTop+2){rowStarts.push(i);lastTop=el.offsetTop}});
+ let pages=[];for(let r=0;r<rowStarts.length;r+=maxRows){let start=rowStarts[r],end=rowStarts[r+maxRows]??tags.length;pages.push(tags.slice(start,end))}
+ return pages.length?pages:[tags]}
+function pickerHtml(tags,pages){let sel=Object.keys(tagState).filter(k=>tagState[k]).map(k=>tags.find(t=>lc(t.name)===k)).filter(Boolean);
 tagPage=Math.min(tagPage,Math.max(0,pages.length-1));
 return`<div class="chips picked" id="picked">${sel.length?sel.map(t=>chipHtml(t,true)).join(""):`<span class="pickhint">Nothing selected</span>`}</div>
 ${pages.length?`<div class="slider ${pages.length>1?"multi":""}" id="tagSlider">${pages.map(p=>`<div class="spage">${p.map(t=>chipHtml(t,false)).join("")}</div>`).join("")}</div>
@@ -365,8 +374,10 @@ let withArea=db.restaurants.filter(r=>r.area).length;
 if(!db.restaurants.length){app.innerHTML=`<div class="card empty">${BOWL}<h2>No restaurants yet</h2><p class="muted">After your next dinner out, add the first restaurant. From then on, the app suggests where to go.</p><div class="actions" style="justify-content:center"><button class="primary" onclick="nav({view:'new'})">Add restaurant</button></div></div>`;return}
 if(!withArea){app.innerHTML=`<div class="card empty">${BOWL}<h2>Add an area first</h2><p class="muted">Suggestions match where you are. Open a restaurant under “Restaurants” and add its area or district, then come back.</p><div class="actions" style="justify-content:center"><button class="primary" onclick="openTab('list')">Go to restaurants</button></div></div>`;return}
 let tags=SHOW_ALL_TAGS_IN_PICKER?tagPool():allTags(),any=Object.values(tagState).some(Boolean),areas=usedAreas(),area=pickArea();
+let pages=[tags];
+if(tags.length){app.innerHTML=`<section class="hero">${measurePickerHtml(tags)}</section>`;pages=computeTagPages(app,tags,4)}
 let html=`<section class="hero"><h2>${esc(moodPrompt())}</h2>
-${tags.length?pickerHtml(tags):`<p class="muted">No tags yet. Add tags to your restaurants.</p>`}
+${tags.length?pickerHtml(tags,pages):`<p class="muted">No tags yet. Add tags to your restaurants.</p>`}
 <div class="actions full">${any?`<button class="ghostbtn" id="resetTags">Reset</button>`:""}<button class="primary cta" id="roll">${DICE}${sugg?"Roll again":"Show suggestions"}</button></div></section>`;
 if(sugg){html+=sugg.list.length?`<div class="${animateNext?"anim":""}">${sugg.list.map((r,i)=>suggCard(r,i,sugg.pref,i===justReplaced,sugg.area)).join("")}</div>`:`<div class="card"><p class="muted">No restaurant matches your selection. Remove an exclusion.</p></div>`;
 if(sugg.closed)html+=`<p class="small" style="margin:0 4px 12px">${sugg.closed} restaurant${sugg.closed>1?"s are":" is"} closed today and hidden.</p>`}
@@ -527,12 +538,13 @@ if(!all.length)return`<div class="card"><h2>Stats</h2><p class="muted">Stats app
 let t=isoToday(),mon=t.slice(0,7),yr=t.slice(0,4),m=all.filter(x=>x.v.date.startsWith(mon)).length,y=all.filter(x=>x.v.date.startsWith(yr)).length,
  l90=all.filter(x=>daysSince(x.v.date)<90&&daysSince(x.v.date)>=0).length,pw=(l90/(90/7)).toFixed(1);
 let most=db.restaurants.filter(r=>r.visits?.length).sort((a,b)=>b.visits.length-a.visits.length||a.name.localeCompare(b.name,"en")).slice(0,3);
-let tc={};all.forEach(x=>(x.r.tags||[]).forEach(g=>{tc[g]=(tc[g]||0)+1}));let tags=Object.entries(tc).sort((a,b)=>b[1]-a[1]).slice(0,5);
+let tagVisits={};db.restaurants.forEach(r=>{let n=(r.visits||[]).length;(r.tags||[]).forEach(g=>{tagVisits[g]=(tagVisits[g]||0)+n})});let topTags=Object.entries(tagVisits).filter(([,n])=>n>0).sort((a,b)=>b[1]-a[1]).slice(0,3);
 let best=db.restaurants.filter(r=>r.visits?.length).sort((a,b)=>rRating(b)-rRating(a)||b.visits.length-a.visits.length).slice(0,3);
 let dishes=db.restaurants.flatMap(r=>dishesOf(r).filter(d=>d.rating>=3).map(d=>({...d,r}))).sort((a,b)=>b.rating-a.rating||b.count-a.count).slice(0,3);
 const li=(a,b)=>`<li><span>${a}</span><b>${b}</b></li>`;
 return`<div class="card"><h2>Stats</h2><div class="statgrid"><div class="stat"><b>${m}</b><span>visit${m===1?"":"s"} this month</span></div><div class="stat"><b>${y}</b><span>visit${y===1?"":"s"} this year</span></div><div class="stat"><b>${pw}</b><span>per week, last 3 months</span></div></div>
 <div class="statlists"><div><h3>Most visited</h3><ul class="slist">${most.map(r=>li(esc(r.name),r.visits.length+"×")).join("")}</ul></div>
+${topTags.length?`<div><h3>Most visited tags</h3><ul class="slist">${topTags.map(([g,n])=>li(esc(g),n+" visit"+(n===1?"":"s"))).join("")}</ul></div>`:""}
 ${dishes.length?`<div><h3>Favourite dishes</h3><ul class="slist">${dishes.map(d=>li(`${esc(d.name)} <small>${esc(d.r.name)}</small>`,d.rating+"/5")).join("")}</ul></div>`:""}</div>
 <p class="small" style="margin-top:12px">${db.restaurants.length} restaurant${db.restaurants.length===1?"":"s"} in total, ${db.restaurants.filter(r=>!r.visits?.length).length} on the wishlist.</p></div>`}
 let tagsExpanded=false,areasExpanded=false;
@@ -576,7 +588,7 @@ let c=window.cloudState,time=t=>new Date(t).toLocaleString("en-GB",{day:"2-digit
 let cloud=!c?`<p class="muted">Loading cloud backup …</p>`:!c.configured?`<p class="muted">Cloud backup is not set up: the Firebase config is missing in index.html.</p>`
 :!c.ready?`<p class="muted">${c.error?esc(c.error):"Connecting …"}</p>`
 :!c.user?`<p class="muted">Sign in once. After that, every change is backed up to your Google account automatically, so everything is back even on a new phone.</p><button class="primary" onclick="cloud.signIn()">Sign in with Google</button>`
-:`<p class="muted">Signed in as <strong>${esc(c.user.email)}</strong>. This is a shared backup: everyone allowed in the Firestore rules sees the same data.</p><p class="small">${c.status==="pending"?(navigator.onLine?"Backing up …":"Offline. Will back up once you’re online again."):c.status==="error"?"":c.last?"Last backup: "+time(c.last):""}</p><button class="secondary sm" onclick="cloud.signOut()">Sign out</button>`;
+:`<p class="muted">Signed in as <strong>${esc(c.user.email)}</strong>. This is a shared backup: everyone allowed in the Firestore rules sees the same data.</p><p class="small">${c.status==="pending"?(navigator.onLine?"Backing up …":"Offline. Will back up once you’re online again."):c.status==="stalled"?"Taking longer than expected. Your changes are saved on this device and will sync once the connection is stable.":c.status==="error"?"":c.last?"Last backup: "+time(c.last):""}</p><button class="secondary sm" onclick="cloud.signOut()">Sign out</button>`;
 app.innerHTML=statsHtml()+overwriteBackupHtml()+areasHtml()+tagsHtml()+`<div class="card"><h2>Cloud backup</h2>${cloud}${c?.error&&c.ready?`<p class="small warn">${esc(c.error)}</p>`:""}</div>
 <div class="card"><h2>Data</h2><p class="muted">${n} restaurant${n===1?"":"s"}, ${vis} visit${vis===1?"":"s"}.</p><p class="small" id="pstat"></p><p class="small">You can also export a backup file, e.g. straight to Google Drive.</p>
 <div class="actions"><button class="primary" onclick="exportData()">Export data</button><label class="secondary" style="display:inline-block;cursor:pointer">Import backup<input type="file" id="imp" accept=".json,application/json" style="display:none"></label></div></div>
@@ -657,7 +669,7 @@ async function start(){
   const [{initializeApp},A,F]=await Promise.all([import(U("app")),import(U("auth")),import(U("firestore"))]);
   const fb=initializeApp(FIREBASE_CONFIG),auth=A.getAuth(fb);
   const fs=F.initializeFirestore(fb,{localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()})});
-  let ref=null,unsub=null,timer=null;
+  let ref=null,unsub=null,timer=null,writeSeq=0;
   const ok=()=>{st.status="ok";st.last=Date.now();st.error=""};
 function canon(o){const known=["restaurants","deletedRestaurants","tagCatalog","areaCatalog","updatedAt"],out={};
  known.forEach(k=>{if(o[k]!==undefined)out[k]=o[k]});
@@ -665,8 +677,13 @@ function canon(o){const known=["restaurants","deletedRestaurants","tagCatalog","
  return JSON.stringify(out)}
 function timeAgo(ts){if(!ts)return"an unknown time";let s=(Date.now()-ts)/1000;if(s<90)return"moments ago";let m=s/60;if(m<90)return Math.round(m)+" min ago";let h=m/60;if(h<36)return Math.round(h)+" h ago";let d=h/24;return Math.round(d)+" day"+(Math.round(d)===1?"":"s")+" ago"}
 function stash(discardedDb,ts){try{localStorage.setItem("forkcastLastOverwritten",JSON.stringify({db:discardedDb,ts,savedAt:Date.now()}))}catch(e){}}
-  async function write(){if(!ref)return;const db=window.app.get();st.status="pending";upd();
-    try{await F.setDoc(ref,{data:canon(db),updatedAt:db.updatedAt||Date.now()});ok()}catch(e){st.status="error";st.error=msg(e)}upd()}
+  async function write(){if(!ref)return;const db=window.app.get(),myId=++writeSeq;st.status="pending";upd();
+    // Firestore lässt ein setDoc() im Offline-Fall bewusst unbeantwortet, bis wieder eine Verbindung besteht -
+    // ohne diese Uhr würde die Anzeige sonst für immer bei "wird gesichert" hängen bleiben.
+    let stallTimer=setTimeout(()=>{if(writeSeq===myId){st.status="stalled";upd()}},12000);
+    try{await F.setDoc(ref,{data:canon(db),updatedAt:db.updatedAt||Date.now()});clearTimeout(stallTimer);if(writeSeq===myId)ok()}
+    catch(e){clearTimeout(stallTimer);if(writeSeq===myId){st.status="error";st.error=msg(e)}}
+    if(writeSeq===myId)upd()}
   window.cloud={
     async signIn(){st.error="";const p=new A.GoogleAuthProvider();
       try{await A.signInWithPopup(auth,p)}catch(e){
@@ -685,6 +702,7 @@ function stash(discardedDb,ts){try{localStorage.setItem("forkcastLastOverwritten
   A.onAuthStateChanged(auth,user=>{unsub?.();unsub=null;ref=null;st.user=user?{email:user.email,uid:user.uid}:null;st.status="idle";
     if(user){ref=F.doc(fs,"shared","forkcast");st.status="pending";
 unsub=F.onSnapshot(ref,async snap=>{
+        try{
         if(snap.metadata.hasPendingWrites)return;                  // eigene, noch nicht bestätigte Änderung
         const local=window.app.get();
         if(!snap.exists()){local.restaurants.length?write():(ok(),upd());return}       // Cloud-Dokument existiert noch nicht: lokale Daten hochladen
@@ -701,7 +719,9 @@ unsub=F.onSnapshot(ref,async snap=>{
         }
         ok();
         write();                                                                       // eigenen (ggf. schon voraus liegenden) Stand auch für das andere Gerät sichtbar machen
-        upd()},e=>{st.status="error";st.error=msg(e);upd()})}
+        upd()
+        }catch(e){st.status="error";st.error="Sync hit an unexpected snag: "+(e?.message||e);upd()}       // nie stumm hängen bleiben: jeder Fehler wird sichtbar
+      },e=>{st.status="error";st.error=msg(e);upd()})}
     upd()});
 }
 </script>
