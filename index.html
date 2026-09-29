@@ -179,6 +179,7 @@ button.best{width:100%;border:0;text-align:left;font:inherit;font-size:12px;colo
 .ac{position:relative}.aclist{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:20;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px rgba(30,18,38,.18);padding:5px;display:none;max-height:230px;overflow:auto}
 .aclist.open{display:block}.aclist button{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:9px 9px;border-radius:8px;font:inherit;font-size:15px;color:var(--ink);text-align:left}
 .aclist button svg{width:15px;height:15px;flex:none;color:var(--grape)}.aclist button:hover,.aclist button:active{background:#f3edf6}
+.version{text-align:center}.version h3{font-size:14px;color:var(--muted);font-weight:650}.verno{font-size:19px;font-weight:800;letter-spacing:-.3px;color:var(--plum);margin:4px 0 6px}
 .wipe{margin-top:12px}.wipe summary{cursor:pointer;font-size:12.5px;color:var(--muted)}.wipe p{margin:8px 0}
 .empty{text-align:center;padding:28px 18px}.empty svg{width:64px;height:64px;color:var(--grape);opacity:.8;margin-bottom:6px}
 @media(max-width:480px){:root{--gut:9px}.prow{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5px;margin:4px 0 9px}.prow>span{grid-column:1/-1;margin-bottom:-1px}.card{padding:13px}.hero{padding:12px 16px 18px}.hero h2{font-size:27px}}
@@ -193,7 +194,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <main id="app"></main>
 <script>
 const KEY="wohinEssenV1";
-const APP_VERSION="2026-09-29f";
+const APP_VERSION="2026-09-29j";
 let db=load(),stack=[{tab:"today"}],tagState={},sugg=null,listQuery="",listSort="oldest",currentArea=null;
 
 function load(){try{let v=JSON.parse(localStorage.getItem(KEY)||"null");if(v&&Array.isArray(v.restaurants))return v}catch(e){}return{restaurants:[]}}
@@ -201,7 +202,7 @@ function writeLocal(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){
 function save(){db.updatedAt=Date.now();writeLocal();window.cloud?.push()}
 // Schnittstelle für den Cloud-Teil
 window.app={get:()=>db,
- replace(v){if(!v||!Array.isArray(v.restaurants))return;db=v;writeLocal();migrateTags();ensureCatalog();ensureAreaCatalog();sugg=null;render()},
+ replace(v){if(!v||!Array.isArray(v.restaurants))return;db=v;writeLocal();migrateTags();ensureCatalog();ensureAreaCatalog();normalizeAll();sugg=null;render()},
  touch(){db.updatedAt=Date.now();writeLocal()},
  cloudChanged(){let c=window.cloudState,d=$("#cloudDot");if(d)d.hidden=!(c?.configured&&c.ready&&(!!c.error||c.status==="stalled"))
   if(cur().tab==="data"&&!cur().view)render()}};
@@ -245,7 +246,7 @@ LINK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2
 const DICE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/></svg>',
 BOWL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h18a9 9 0 0 1-18 0zM8 8c0-1.5 1-2 1-3.5M12 8c0-1.5 1-2 1-3.5M16 8c0-1.5 1-2 1-3.5"/></svg>';
 let animateNext=false,justReplaced=-1;
-const REPL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/></svg>',
+const REPL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l6 6-6 6"/><path d="M13 6l6 6-6 6"/></svg>',
 NOPE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>';
 const mapsSearch=r=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(r.name);
 function linkHtml(r,compact){if(r.link){let maps=isMaps(r.link),label=maps?(compact?"Maps":"Open in Maps"):new URL(r.link).hostname.replace(/^www\./,"");return`<a class="rlink" href="${esc(r.link)}" target="_blank" rel="noopener">${LINK}<span>${esc(label)}</span></a>`}
@@ -371,6 +372,7 @@ return`<div class="chips picked" id="picked">${sel.length?sel.map(t=>chipHtml(t,
 ${pages.length?`<div class="slider ${pages.length>1?"multi":""}" id="tagSlider">${pages.map(p=>`<div class="spage">${p.map(t=>chipHtml(t,false)).join("")}</div>`).join("")}</div>
 ${pages.length>1?`<div class="dots" role="tablist">${pages.map((_,i)=>`<button class="dot ${i===tagPage?"on":""}" data-page="${i}" aria-label="Tags page ${i+1} of ${pages.length}"></button>`).join("")}</div>`:""}`:""}`}
 function renderToday(app){
+const keepY=(typeof scrollY==="number")?scrollY:0;
 let withArea=db.restaurants.filter(r=>r.area).length;
 if(!db.restaurants.length){app.innerHTML=`<div class="card empty">${BOWL}<h2>No restaurants yet</h2><p class="muted">After your next dinner out, add the first restaurant. From then on, the app suggests where to go.</p><div class="actions" style="justify-content:center"><button class="primary" onclick="nav({view:'new'})">Add restaurant</button></div></div>`;return}
 if(!withArea){app.innerHTML=`<div class="card empty">${BOWL}<h2>Add an area first</h2><p class="muted">Suggestions match where you are. Open a restaurant under “Restaurants” and add its area or district, then come back.</p><div class="actions" style="justify-content:center"><button class="primary" onclick="openTab('list')">Go to restaurants</button></div></div>`;return}
@@ -396,9 +398,13 @@ let sl=$("#tagSlider");if(sl){sl.scrollLeft=tagPage*sl.clientWidth;let dots=app.
 app.querySelectorAll("[data-tag]").forEach(b=>b.onclick=()=>{let k=b.dataset.tag,s=tagState[k]||0;tagState[k]=s===0?1:s===1?-1:0;if(!tagState[k])delete tagState[k];popTag=s===0?k:null;if(sugg)sugg=suggest();renderToday(app)});
 $("#roll").onclick=()=>{sugg=suggest();animateNext=true;renderToday(app);let t=app.querySelector(".ticket");t&&t.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"center"})};
 if(any)$("#resetTags").onclick=()=>{tagState={};if(sugg)sugg=suggest();renderToday(app)};
+if(keepY&&typeof scrollTo==="function")scrollTo(0,keepY);   // Ansicht bleibt, wo sie war
 app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>nav({view:"detail",rid:b.dataset.go,tab:"list"}));
 app.querySelectorAll("[data-rep]").forEach(b=>b.onclick=()=>{let i=+b.dataset.rep,r=sugg.list[i];setSkipped([...new Set([...skippedToday(),r.id])]);
- let nx=suggest(sugg.list.filter((_,k)=>k!==i).map(x=>x.id),1).list[0];if(nx){sugg.list[i]=nx;justReplaced=i}else sugg.list.splice(i,1);renderToday(app)});
+ let nx=suggest(sugg.list.filter((_,k)=>k!==i).map(x=>x.id),1).list[0];
+ sugg.list.splice(i,1);                                    // uebrige ruecken auf, "Top-Tipp" geht an den naechstbesten
+ if(nx){sugg.list.push(nx);justReplaced=sugg.list.length-1} // Ersatz stammt aus dem Rest -> gehoert ans Ende
+ renderToday(app)});
 $("#undoSkip")&&($("#undoSkip").onclick=()=>{setSkipped([]);sugg=suggest();animateNext=true;renderToday(app)})}
 
 function suggCard(r,i,pref,fresh,selArea){let areaMismatch=selArea&&r.area&&lc(r.area)!==lc(selArea);let v=lastVisit(r),ds=dishesOf(r),top=ds.filter(d=>d.rating>=3).slice(0,3),avoid=ds.filter(d=>d.rating<=1),n=(r.visits||[]).length;
@@ -408,7 +414,7 @@ return`<article class="ticket ${i===0?"first":""} ${fresh?"fresh":""}" style="--
 ${r.tags?.length?`<div class="chips mini">${r.tags.map(t=>`<span class="chip ${pref.includes(lc(t))?"pref":""}">${esc(t)}</span>`).join("")}</div>`:""}${propsHtml(r)}${noteHtml(r)}
 ${top.length?`<button class="best" data-go="${r.id}">${BOWL}<div class="bl"><span class="bh">Best dishes</span><ul class="dl">${top.map(d=>`<li><span>${esc(shortDish(d))}</span><b>${d.rating}/5</b></li>`).join("")}</ul></div>${CHEVR}</button>`:""}
 ${avoid.length?`<button class="best avoid" data-go="${r.id}">${NOPE}<div class="bl"><span class="bh">Avoid</span><ul class="dl">${avoid.map(d=>`<li><span>${esc(shortDish(d))}</span></li>`).join("")}</ul></div>${CHEVR}</button>`:""}
-<div class="actions"><button class="primary sm" onclick="nav({view:'visit',rid:'${r.id}'})">Log visit</button><button class="secondary sm replace" data-rep="${i}" aria-label="Remove ${esc(r.name)} for today">${REPL}<span>Remove</span></button></div></div></article>`}
+<div class="actions"><button class="primary sm" onclick="nav({view:'visit',rid:'${r.id}'})">Log visit</button><button class="secondary sm replace" data-rep="${i}" aria-label="Not today: ${esc(r.name)}">${REPL}<span>Not today</span></button></div></div></article>`}
 
 // ---------- Liste ----------
 function renderList(app){app.innerHTML=`<div class="card"><div class="row"><h2>Restaurants</h2><button class="primary sm" id="newR">+ New</button></div>
@@ -484,7 +490,7 @@ ${ds.length?`<div class="card"><h3>Dishes</h3>${ds.map((d,i)=>`<div class="dish 
 `;
 app.querySelectorAll("[data-dedit]").forEach(b=>b.onclick=()=>{let d=ds[+b.dataset.dedit];if(d)nav({view:"dish",rid:r.id,key:lc(d.name)})});
 app.querySelectorAll("[data-ddel]").forEach(b=>b.onclick=()=>{let d=ds[+b.dataset.ddel];if(d)deleteDish(r,lc(d.name),d)})}
-async function deleteDish(r,key,d){if(!await ask(`Delete “${d.name}”${d.count>1?` from all ${d.count} visits`:""}?`,"Delete",true))return;r.visits.forEach(vv=>vv.dishes=(vv.dishes||[]).filter(x=>lc(x.name)!==key));r.updatedAt=Date.now();save();sugg=null;render()}
+async function deleteDish(r,key,d){if(!await ask(`Delete “${d.name}”${d.count>1?` from all ${d.count} visits`:""}?`,"Delete",true))return;r.visits.forEach(vv=>{if((vv.dishes||[]).some(x=>lc(x.name)===key)){vv.dishes=vv.dishes.filter(x=>lc(x.name)!==key);vv.updatedAt=Date.now()}});r.updatedAt=Date.now();save();sugg=null;render()}
 async function delVisit(rid,vid){let r=byId(rid);if(!r||!await ask("Delete this visit?","Delete",true))return;
  (db.deletedVisits??=[]).push({vid,at:Date.now()});if(db.deletedVisits.length>500)db.deletedVisits=db.deletedVisits.slice(-500);
  r.visits=r.visits.filter(x=>x.id!==vid);save();sugg=null;render()}
@@ -507,8 +513,9 @@ const occ=()=>visitsOf(r).flatMap(vv=>(vv.dishes||[]).filter(x=>lc(x.name)===v.k
 $("#dSave").onclick=async()=>{let name=f.name.trim().replace(/\s+/g," ");if(!name){say("Please enter a name.");return}
  let other=dishesOf(r).find(x=>lc(x.name)===lc(name)&&lc(x.name)!==v.key);if(other&&!await ask(`“${other.name}” already exists here. Merge both dishes?`,"Merge"))return;
  let all=occ();all.forEach((x,i)=>{x.name=name;x.no=f.no.trim();if(i===0){x.rating=f.rating;x.comment=f.comment.trim()}else x.comment=""});
+ visitsOf(r).forEach(vv=>{if((vv.dishes||[]).some(x=>lc(x.name)===name.toLowerCase()||lc(x.name)===v.key))vv.updatedAt=Date.now()});
  save();sugg=null;app.onclick=null;back()};
-$("#dDel").onclick=async()=>{if(!await ask(`Delete “${d.name}”${d.count>1?` from all ${d.count} visits`:""}?`,"Delete",true))return;r.visits.forEach(vv=>vv.dishes=(vv.dishes||[]).filter(x=>lc(x.name)!==v.key));save();sugg=null;app.onclick=null;back()}}
+$("#dDel").onclick=async()=>{if(!await ask(`Delete “${d.name}”${d.count>1?` from all ${d.count} visits`:""}?`,"Delete",true))return;r.visits.forEach(vv=>{if((vv.dishes||[]).some(x=>lc(x.name)===v.key)){vv.dishes=vv.dishes.filter(x=>lc(x.name)!==v.key);vv.updatedAt=Date.now()}});save();sugg=null;app.onclick=null;back()}}
 
 // ---------- Besuch ----------
 const rater=(id,val)=>`<div class="rate" data-rate="${id}" role="group" aria-label="Rating 0 to 5">${[0,1,2,3,4,5].map(n=>`<button type="button" data-n="${n}" class="${n===val?"on":""}">${n}</button>`).join("")}</div>`;
@@ -533,7 +540,7 @@ let del=e.target.closest("[data-del]");if(del){f.dishes.splice(+del.dataset.del,
 $("#vDate").onchange=e=>f.date=e.target.value;
 $("#addDish").onclick=()=>{f.dishes.push({name:"",no:"",rating:3,comment:""});drawDishes();let ins=$("#dishes").querySelectorAll("[data-k=name]");ins[ins.length-1]?.focus()};
 $("#saveVisit").onclick=()=>{let data={date:f.date||isoToday(),rating:f.rating,dishes:f.dishes.map(d=>({name:d.name.trim(),no:String(d.no||"").trim(),rating:d.rating,comment:d.comment.trim()})).filter(d=>d.name||d.no).map(d=>({...d,name:d.name||"No. "+d.no}))};
-if(orig)Object.assign(orig,data);else(r.visits??=[]).push({id:uid(),created:Date.now(),...data});save();sugg=null;app.onclick=null;back()}}
+data.updatedAt=Date.now();if(orig)Object.assign(orig,data);else(r.visits??=[]).push({id:uid(),created:Date.now(),...data});save();sugg=null;app.onclick=null;back()}}
 
 // ---------- Daten ----------
 function statsHtml(){let all=db.restaurants.flatMap(r=>(r.visits||[]).map(v=>({r,v})));
@@ -595,7 +602,8 @@ app.innerHTML=statsHtml()+areasHtml()+tagsHtml()+`<div class="card"><h2>Cloud ba
 <div class="card"><h2>Data</h2><p class="muted">${n} restaurant${n===1?"":"s"}, ${vis} visit${vis===1?"":"s"}.</p><p class="small" id="pstat"></p><p class="small">You can also export a backup file, e.g. straight to Google Drive.</p>
 <div class="actions"><button class="primary" onclick="exportData()">Export data</button><label class="secondary" style="display:inline-block;cursor:pointer">Import backup<input type="file" id="imp" accept=".json,application/json" style="display:none"></label></div></div>
 ${pendingImport?`<div class="card importbox" id="importBox"><h3>Import “${esc(pendingImport.name)}”</h3><p class="muted">${pendingImport.data.restaurants.length} restaurants in this backup. How should it be imported?</p><div class="actions"><button class="primary" onclick="doImport('merge')">Merge</button><button class="danger" onclick="doImport('replace')">Replace all</button><button class="secondary" onclick="pendingImport=null;render()">Cancel</button></div><p class="small" style="margin-top:8px"><b>Merge</b> adds new restaurants and visits and keeps everything you already have. <b>Replace all</b> deletes your current data first.</p></div>`:""}${importMsg?`<div class="card"><p class="small" style="margin:0;color:var(--herb)">${esc(importMsg)}</p></div>`:""}
-<div class="card"><h3>Reset</h3><p class="small">App version <strong>${APP_VERSION}</strong> — this must match on all your devices.</p><p class="small">Clears the data on this device and signs you out of the cloud. Your cloud backup stays, so signing in again restores everything.</p><button class="danger" onclick="resetLocal()">Clear this device</button>${window.cloudState?.user?`<details class="wipe"><summary>Delete cloud backup permanently</summary><p class="small">This erases the copy in your Google account for good. It cannot be undone.</p><button class="dangerfill" onclick="wipeCloud()">Delete cloud backup</button></details>`:""}</div>`;
+<div class="card"><h2>Reset</h2><p class="small">Clears the data on this device and signs you out of the cloud. Your cloud backup stays, so signing in again restores everything.</p><button class="danger" onclick="resetLocal()">Clear this device</button>${window.cloudState?.user?`<details class="wipe"><summary>Delete cloud backup permanently</summary><p class="small">This erases the copy in your Google account for good. It cannot be undone.</p><button class="dangerfill" onclick="wipeCloud()">Delete cloud backup</button></details>`:""}</div>
+<div class="card version"><h3>App version</h3><p class="verno">${APP_VERSION}</p><p class="small">This must match on all your devices. If it differs, fully reload the app there.</p></div>`;
 $("#imp").onchange=importData;app.querySelectorAll("[data-aren]").forEach(b=>b.onclick=()=>renameArea(b.dataset.aren));app.querySelectorAll("[data-adel]").forEach(b=>b.onclick=()=>deleteArea(b.dataset.adel));$("#areaToggle")&&($("#areaToggle").onclick=()=>{areasExpanded=!areasExpanded;render();if(!areasExpanded)$("#areaCard").scrollIntoView({block:"start"})});$("#addArea")&&($("#addArea").onclick=addCatalogArea);$("#newArea")&&($("#newArea").onkeydown=e=>{if(e.key==="Enter")addCatalogArea()});app.querySelectorAll("[data-tren]").forEach(b=>b.onclick=()=>renameTag(b.dataset.tren));$("#tagToggle")&&($("#tagToggle").onclick=()=>{tagsExpanded=!tagsExpanded;render();if(!tagsExpanded)$("#tagCard").scrollIntoView({block:"start"})});$("#addTag").onclick=addCatalogTag;$("#newTag").onkeydown=e=>{if(e.key==="Enter")addCatalogTag()};app.querySelectorAll("[data-tdel]").forEach(b=>b.onclick=()=>deleteTag(b.dataset.tdel));navigator.storage?.persisted?.().then(p=>{let el=$("#pstat");if(el)el.textContent=p?"Storage is marked as persistent: Chrome won’t clear it when space runs low.":"Local storage isn’t marked as persistent. With cloud backup that’s not a problem."})}
 async function exportData(){let name="forkcast-backup-"+isoToday()+".json",json=JSON.stringify(db,null,2);
 try{let file=new File([json],name,{type:"application/json"});if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:name});return done()}}catch(e){if(e.name==="AbortError")return}
@@ -619,7 +627,7 @@ const normR=o=>{o.name=o.name??"";o.tags=Array.isArray(o.tags)?o.tags:[];o.link=
 // weil er Pflicht ist und niemals versehentlich geleert werden darf.
 function fieldSig(o){return canon({name:o.name??"",tags:[...(o.tags||[])].sort(),link:o.link??"",note:o.note??"",
  closed:[...(o.closed||[])].sort((a,b)=>a-b),props:[...(o.props||[])].sort()})}
-const mergeArea=(x,y)=>!x?(y||""):!y?x:(x<y?x:y);        // symmetrisch: auf beiden Geräten dasselbe Ergebnis
+function normalizeAll(){const before=canon(db.restaurants);db.restaurants.forEach(normR);if(canon(db.restaurants)!==before)writeLocal()}
 function mergeDbs(target,source){
  target.deletedVisits=target.deletedVisits||[];
  let delVisitIds=new Set(target.deletedVisits.map(x=>x.vid));
@@ -644,15 +652,19 @@ function mergeDbs(target,source){
   if(!r){if(target.restaurants.some(x=>x.id===ir.id))ir={...ir,id:uid()};target.restaurants.push(JSON.parse(JSON.stringify(ir)));newR++;newV+=(ir.visits||[]).length;return}
   (ir.visits||[]).forEach(iv=>{let ex=(r.visits||[]).find(x=>sameVisit(x,iv));
    if(!ex){(r.visits??=[]).push(r.visits.some(x=>x.id===iv.id)?{...iv,id:uid()}:iv);newV++;return}
-   if(canon(iv)<canon(ex))Object.assign(ex,JSON.parse(JSON.stringify(iv)))});      // auch hier fest entscheiden, statt beide Fassungen stehen zu lassen
+   const tv=ex.updatedAt||0,ti=iv.updatedAt||0;                                    // neuere Bearbeitung des Besuchs gewinnt,
+   if(ti>tv||(ti===tv&&canon(iv)<canon(ex)))Object.assign(ex,JSON.parse(JSON.stringify(iv)))});   // ohne Zeitstempel entscheidet die feste Regel
   normR(r);normR(ir);
   const tm=r.updatedAt||0,tt=ir.updatedAt||0,sm=fieldSig(r),ss=fieldSig(ir);
   // Neuere Bearbeitung gewinnt komplett. Ohne verwertbaren Zeitstempel entscheidet ein fester, auf beiden
   // Geräten identischer Vergleich - sonst behält jede Seite ihre Fassung und der Abgleich endet nie.
   if(sm!==ss&&(tt>tm||(tt===tm&&ss<sm))){
    r.name=ir.name;r.tags=[...ir.tags];r.link=ir.link;r.note=ir.note;
-   r.closed=[...ir.closed];r.props=[...ir.props];r.updatedAt=Math.max(tm,tt)||undefined}
-  r.area=mergeArea(r.area,ir.area)});
+   r.closed=[...ir.closed];r.props=[...ir.props]}
+  // Ort: eine leere Seite darf nie gewinnen (Pflichtfeld), sonst gilt wie sonst die neuere Bearbeitung.
+  if(!r.area)r.area=ir.area||"";
+  else if(ir.area&&ir.area!==r.area&&(tt>tm||(tt===tm&&ir.area<r.area)))r.area=ir.area;
+  r.updatedAt=Math.max(tm,tt)||undefined});                                                 // beide Seiten auf denselben Stempel bringen
  if(Array.isArray(source.tagCatalog)){target.tagCatalog=target.tagCatalog||[];source.tagCatalog.forEach(t=>{if(!delTagNames.has(lc(t))&&!target.tagCatalog.some(x=>lc(x)===lc(t)))target.tagCatalog.push(t)})}
  target.tagCatalog=(target.tagCatalog||[]).filter(t=>!delTagNames.has(lc(t)));
  if(Array.isArray(source.areaCatalog)){target.areaCatalog=target.areaCatalog||[];source.areaCatalog.forEach(a=>{if(!delAreaNames.has(lc(a))&&!target.areaCatalog.some(x=>lc(x)===lc(a)))target.areaCatalog.push(a)})}
@@ -685,7 +697,7 @@ async function resetLocal(){if(!await ask("Clear all data on this device? Your c
  if(window.cloud?.signOut)await window.cloud.signOut(true);render()}
 async function wipeCloud(){if(!await ask("Permanently delete the cloud backup? This cannot be undone.","Delete backup",true))return;let ok=window.cloud?.wipe?await window.cloud.wipe():false;say(ok?"Cloud backup deleted.":"Could not delete the cloud backup. Check your connection and that you are signed in.")}
 
-migrateTags();ensureCatalog();ensureAreaCatalog();
+migrateTags();ensureCatalog();ensureAreaCatalog();normalizeAll();
 render();
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("./sw.js");
 if(navigator.storage?.persist)navigator.storage.persist();
