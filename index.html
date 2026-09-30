@@ -97,7 +97,7 @@ textarea{resize:vertical;margin-top:5px}
 .searchrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:10px}
 .dish,.visit{border-top:1px solid var(--line);padding:10px 0}.dish:first-of-type,.visit:first-of-type{border-top:0}
 /* Bewertung */
-.rate{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:6px}
+.rate{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-top:6px}
 .rate button{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:9px 0;font-weight:750;color:var(--ink);font-size:15px}
 .rate button.on{background:var(--plum);border-color:var(--plum);color:var(--saffron2)}
 .dishrow{border:1.5px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px;background:#fcfafd}
@@ -179,8 +179,40 @@ button.best{width:100%;border:0;text-align:left;font:inherit;font-size:12px;colo
 .ac{position:relative}.aclist{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:20;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px rgba(30,18,38,.18);padding:5px;display:none;max-height:230px;overflow:auto}
 .aclist.open{display:block}.aclist button{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:9px 9px;border-radius:8px;font:inherit;font-size:15px;color:var(--ink);text-align:left}
 .aclist button svg{width:15px;height:15px;flex:none;color:var(--grape)}.aclist button:hover,.aclist button:active{background:#f3edf6}
-.version{text-align:center}.version h3{font-size:14px;color:var(--muted);font-weight:650}.verno{font-size:19px;font-weight:800;letter-spacing:-.3px;color:var(--plum);margin:4px 0 6px}
+.verno{font-size:14px;font-weight:600;color:var(--muted);margin:2px 0 6px;font-variant-numeric:tabular-nums}
+.credit{margin:12px 0 0;padding-top:10px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);font-style:italic}
 .wipe{margin-top:12px}.wipe summary{cursor:pointer;font-size:12.5px;color:var(--muted)}.wipe p{margin:8px 0}
+.urate{margin-top:10px}.urate .uname{font-weight:700;font-size:14px}.urate .uname small{font-weight:500;color:var(--muted)}
+.urate .clr{padding:0;font-size:12.5px}
+.peruser{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ur{font-size:12.5px;background:#f3edf6;border-radius:20px;padding:3px 9px;color:#54475c}.ur b{font-weight:750;color:var(--plum)}
+.ur.spread{background:#fff7e6;color:#8a5a00}
+.vrates{display:flex;gap:5px;flex-wrap:wrap}
+.bysel{display:flex;gap:5px;margin-top:8px}
+.bysel button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:7px 6px;font:inherit;font-size:13px;font-weight:650;color:var(--muted)}
+.bysel button.on{background:var(--plum);border-color:var(--plum);color:#fff}
+.dishhead{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.dishhead h2{margin:0;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ava{width:36px;height:36px;border-radius:50%;flex:none;object-fit:cover;background:#f3edf6}
+.dcount{font-size:12px;font-weight:700;color:var(--muted);background:#f3edf6;border-radius:12px;padding:2px 9px;flex:none}
+.dishitem{border-top:1px solid var(--line);padding:7px 0}.dishitem:first-of-type{border-top:0}
+.dtop{display:flex;align-items:center;gap:8px}
+.dtop .dname{flex:1;min-width:0;font-size:14.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dtop .stars{flex:none;font-size:13px;letter-spacing:0}
+.ibtn{flex:none;width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;padding:0}
+.ibtn svg{width:14px;height:14px}
+.ibtn.del{border-color:#f3cfc9;background:var(--tomato-bg);color:var(--tomato)}
+.dishitem .dcom{font-size:12px;color:var(--muted);font-style:italic;margin-top:1px;overflow-wrap:anywhere}
+.signin{text-align:center}
+.signin .ava{width:52px;height:52px;margin:2px 0 8px}
+.signin .ava.second{margin-left:-14px}
+.signin h2{margin-bottom:4px}
+.splitline{display:flex;align-items:center;gap:10px;margin:4px 2px 14px;color:var(--muted)}
+.splitline::before,.splitline::after{content:"";flex:1;height:1px;background:var(--line)}
+.splitline span{font-size:12px;font-weight:600;white-space:nowrap}
+.bothtag{font-size:11px;font-weight:700;background:#efe6f7;color:var(--grape);border-radius:10px;padding:1px 6px;margin-left:4px}
+.dgap{text-align:center;font-size:12px;color:var(--muted);padding:6px 0;border-top:1px dashed var(--line)}
+.actions.right{justify-content:flex-end}.actions.right .replace{margin-left:0}
 .empty{text-align:center;padding:28px 18px}.empty svg{width:64px;height:64px;color:var(--grape);opacity:.8;margin-bottom:6px}
 @media(max-width:480px){:root{--gut:9px}.prow{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5px;margin:4px 0 9px}.prow>span{grid-column:1/-1;margin-bottom:-1px}.card{padding:13px}.hero{padding:12px 16px 18px}.hero h2{font-size:27px}}
 button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--grape);outline-offset:2px}
@@ -194,7 +226,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <main id="app"></main>
 <script>
 const KEY="wohinEssenV1";
-const APP_VERSION="2026-09-29j";
+const APP_VERSION="2026-09-29p";
 let db=load(),stack=[{tab:"today"}],tagState={},sugg=null,listQuery="",listSort="oldest",currentArea=null;
 
 function load(){try{let v=JSON.parse(localStorage.getItem(KEY)||"null");if(v&&Array.isArray(v.restaurants))return v}catch(e){}return{restaurants:[]}}
@@ -205,7 +237,7 @@ window.app={get:()=>db,
  replace(v){if(!v||!Array.isArray(v.restaurants))return;db=v;writeLocal();migrateTags();ensureCatalog();ensureAreaCatalog();normalizeAll();sugg=null;render()},
  touch(){db.updatedAt=Date.now();writeLocal()},
  cloudChanged(){let c=window.cloudState,d=$("#cloudDot");if(d)d.hidden=!(c?.configured&&c.ready&&(!!c.error||c.status==="stalled"))
-  if(cur().tab==="data"&&!cur().view)render()}};
+  if(!cur().view&&(cur().tab==="data"||cur().tab==="today"))render()}};
 const $=s=>document.querySelector(s);
 // Eigene Dialoge statt confirm/alert/prompt (die werden in manchen Umgebungen blockiert)
 function dialog({msg,ok="OK",cancel="Cancel",danger=false,input=null}){return new Promise(res=>{let d=document.createElement("div");d.className="modal";
@@ -231,10 +263,23 @@ function normArea(a){a=String(a||"").trim().replace(/\s+/g," ");if(!a)return"";r
 function ensureAreaCatalog(){let changed=!Array.isArray(db.areaCatalog);if(changed)db.areaCatalog=[];db.restaurants.forEach(r=>{if(r.area&&!db.areaCatalog.some(x=>lc(x)===lc(r.area))){db.areaCatalog.push(r.area);changed=true}});if(changed)save()}
 function usedAreas(){let c={};db.restaurants.forEach(r=>{if(r.area)c[r.area]=(c[r.area]||0)+1});return Object.keys(c).sort((a,b)=>c[b]-c[a]||a.localeCompare(b,"en"))}
 function pickArea(){let a=usedAreas();if(!a.length)return null;if(currentArea&&a.some(x=>lc(x)===lc(currentArea)))return currentArea;let fr=a.find(x=>lc(x)==="friedrichshain");return fr||a[0]}
-const visitsOf=r=>[...(r.visits||[])].sort((a,b)=>b.date.localeCompare(a.date)||(b.created||0)-(a.created||0));
+// Die beiden Nutzer. Wer eingeloggt ist, bestimmt Vorbelegungen und die Reihenfolge der Anzeige.
+const USERS=[{k:"michel",label:"Michel",mail:"penke.michel@gmail.com",pic:"data:image/webp;base64,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"},{k:"oded",label:"Oded",mail:"odedlevran@gmail.com",pic:"data:image/webp;base64,UklGRkYJAABXRUJQVlA4WAoAAAAQAAAATwAATwAAQUxQSE8CAAABkGvbtlo3594rOczUmu0/CSfqwvAFDK39E8HeVId6ZmZmZk50YY8h6ZG0kzoiHLht40h2gimou3sl8f5AmqYyRjJ2JQNjZ598SYH0y5OzYwNJl2Q0RknJVJGIzEp2X/qOhvx+aXcyS0QiVXYtXjT0HhmDcz6EwgmCd65wgvdDi+JSK0ZkxpYbAJz1AQ0ZvHUAbmyZIWLKgdYyZddzwLuAphmcB57vmiJal4BIZM19wHq0SG+B+2tEopbXNNJ9ELABJTBY4GC3GNXaMJGNn+E8SqJ3+LxRRLe0W9s+wKFEOmBfm5gWfN6xBrNKmnRsnpimvecuLEqnxd0eMU16/4vcq7AX/WKa8u4XcKiEDi+6mzAtc+/nXpXdn9twH2XiE7CojBYn4kaf/0gOIEWFTHFAogaD1hXrVVbX1R2jVfs3H6pF8N/ala5XHoVDxXQ4KqaOr4BF5bRYUWNKT3oSfPXw4ckkrYor7sxLhmJnYUGlpr7JS4bizVSl8nITHCjosEmirIzv5iVHcTdWKpL5yJzEMF8iIyPBssCGETEy/RMCCwI+TRdZXhzNMni5yJ68zdPcI/oKPA88ruiOnwg8CPjZkeTOZMlgPpJp4OAYG8bOwTPB49xTtu6nX9jwJQUZU/z3yNfgG8K3EN/3iO97zvc7xPc7yfc7zvc/Q/c/SPg/zRdH8MU5fHEYX5xIF8fyxdl0eQBfnkKXR9HleXx5KF2eTJfH8+kMdDoInU5DpyPR6Vx0OhydTkinY9LprGw6MJ1Ozaaj0+n8/8Z7CLr3JAIAVlA4INAGAACQHQCdASpQAFAAPkkei0QioaEcKvdUKASEtgBhXMDrfxX+seZZYv7b+KeTUOd2zzm/MA/Ujpq+Yz9t+p36AH9L/o3//7Dj0APLb9iz9vfSfvEDGhzd/AJXtW4/b0I0muCi8QmQn0V9Cb1Z7Av61f8ngUv27F1UbdNY1bkjP+Z5+KMxZ/kl9+H5u5GYEWyl0/7txgiqSt8m0rNRpCvnJoQzUk/jXHNOS2FJH/fQJ14sjYkSkRZFndrpLbYWzQPTFrtpS1loD05sDit4NSGnsUXOC/urzAuASbhpJJcM/dwhYTUPF4LTRkSYTdiDSWqvLjjiegbzMAD+3d3/+Uh//zAz//5Wb/p2n5yTdgvT+OXkTXJGeNDxX2/zHLfrtPpnX4eXCBrza9T9+5q+E5TdufV8CzLDNrWA7FsPap98d2W0G6KHF8ttKbQsj2Z5lxuigKbsSEUi+LbnoDb6ydTNgmegy/hlRCir4OcT3/68IKHQQ6R3WYTgE3TFR4qBCgbfeDcPJUUYuc+WEkzmRAC3rMDpaY9SOwL0XgIyNXTL9p0LBYUCjX3pz6IyZdWGUVeVoYMt/Yph/xsFxeBzu9vlC93j5fux8S4iTw/aWfdSPlXB9Iy9ju955LIrz4h7PclnnHAmedAT1hf4WVgM6ry6FMhOfaw63LT5h8X5P/eCvFE2eBWCc76NCWKlnWuuPzovBwyIerhcCL9csF3zXOqrxe7k/jqEKkOZbDTDH7+b4WhOVDLjP2JhKLIV/V/bpirWYX92S0Y+5HZ/S2vv0M/+fTbTsRMJ7LylE8D+LCl8PHYHO20LGHjiUocoJzDyEPIMPcsA/MNg768yMz1IH0/RnbgLl/JkB39pEpXCMYZ6KMrue/53RDPOSuDiTOCkYVXmjC/ZKlMb1p1iRM9fuE5q+6i0RTfSCOPxbHWlztbeLAWtXm9HOMMQ4DiTglanVF/Co/vXwfgNWOHet8+a7ed2bcM3LDCm8pH9OwkWRNM7YBNZmnpqXE6XLZgiW5K2z56u5ujludyj2VLgtf2iM674G/wudnSLpCQC5rhJxK4qA/ffDFt4zsfnM3ZtFsd9fscNrZ+2cvcPjNJ9ipvpwX1eEfaxokBOyGa0WQx0LAxBjCVfLQ3oan94r7wco0wGrrX7/twsq341xvsp7mVAA6fMAEOnOrez0Y4uIw2ODWB8tZ0RBUijFTXOWdH2wTkReM0NOCN7/XymAbeilmS9L9yGzWiPiPH5qo0j/fzIdt0usFFgs6Nzf9rL0gwc3PbHEY/UCgmv80dReIZsBAyX9LewhDgVGiVDZojPby2MbsYbWpVIGI5qhIHjsyJudlrQ4+eYU3rUI8k05/zleiFOX6L3Wpn9O/Q+U4pW8B5Umynl1b6+68OKm9xAlpba7am3WY14jqprF8ng4P+EpbHf987ArONe7LrnFkDQWLDLwKwUneiwiOFpuvCnUhjDnMWKla6oQriLL4ewrIa1FTkfQpD/TC+/L0NDMxsMq/LUK2T5N78akW84DPjruGvbKkvLna/6WSL5GAD+d60/xqqnqIddKZGS49XJa3BBvZFfj67G4UtYsqMHXVgWK3g+kYOiqn0ZDyIunL6NDcv8XfaBeFsy47PjcCf5lb9WNPaClimRAcrOmL1sgyZ4iKdQOm3OOQsEK286FkC478pDrCWCZ6Un/kaChwmVI32o4falDFu9/s4pPU9e//hrSWM/dDmOkctzLsNoLAzFvW60wWR6m3bUr/lhOsxcikxndoKLKin1QbSw2IvPYC1C01Jzsm6GWAu07JwOerWjffdw0NiqiSVHAWrw1J9vHSP4rR2FSycT21htYFx+Oh4ecJOdtXzV/W6im2Gdzk/sA9mDrWA7YnlYxpsXoQq//s95YOVlqpaV8s9+n//+z8yOCXvLBy2bf/XWvPja1dDu7+aRX7EYy3elnmYMx75ELmnYbZgmuC9P+xGr4lfaeSbq9ehM2lZ02+xfPee7wmjyaOrYUgFAX8mhhvl3fyFH+HTtUKmwJvDZEygdR77tmUhftuFfkAHEAuESnK0+a5soeVByoJ3SKDCQ1Jl8yv43+gDSrOvzxFt8GPBK4lFDMuPJBI0ww403RHuxs/z9w1Nga4B6kfqP2N2RgaFneUv4U7hgkA6QK6jYEscWOF8sfcb5AZ84mHb0kqc2gHT2Q3Kz7Rpg3QEmf141V8nkTz0uOdy3/ZAh+n46wSktZZKIlcBw/7YnxoFuVjkPSnqZYF2AwBLg/Hoz0Hycc+iX5xv/1vKwY9B68z9kSWUt+b5oii8ZJZmeP0rHhmePjIoE0fAdvh+GFfl7HfTAAAAA"}];
+const meKey=()=>{const m=lc(window.cloudState?.user?.email||"");return USERS.find(u=>u.mail===m)?.k||null};
+const userLabel=k=>USERS.find(u=>u.k===k)?.label||k;
+function orderedUsers(){const me=meKey();return me?[...USERS].sort((a,b)=>(b.k===me)-(a.k===me)):[...USERS]}
+// Alle gespeicherten Datensätze eines Restaurants (auch reine Gerichte-Einträge ohne Besuch)
+const allRecords=r=>[...(r.visits||[])].sort((a,b)=>b.date.localeCompare(a.date)||(b.created||0)-(a.created||0));
+// Echte Besuche: ohne die Einträge, die nur ein Gericht festhalten
+const visitsOf=r=>allRecords(r).filter(v=>!v.dishOnly);
 const lastVisit=r=>visitsOf(r)[0];
+// Bewertung eines Besuchs. Kurzzeitig gab es getrennte Bewertungen je Nutzer - die werden noch gelesen und gemittelt.
+function vRating(v){if(v.rating!=null)return v.rating;
+ const xs=Object.values(v.ratings||{}).filter(x=>x!=null);
+ return xs.length?Math.round(xs.reduce((a,b)=>a+b,0)/xs.length):null}
 // Restaurantbewertung: gewichteter Durchschnitt, letzter Besuch zählt 1, davor 0,7, 0,49 …
-function rRating(r){let vs=visitsOf(r);if(!vs.length)return null;let sw=0,sum=0;vs.slice(0,8).forEach((v,i)=>{let w=Math.pow(.7,i);sw+=w;sum+=w*v.rating});return sum/sw}
+function rRating(r){const vs=visitsOf(r).filter(v=>vRating(v)!=null);if(!vs.length)return null;
+ let sw=0,sum=0;vs.slice(0,8).forEach((v,i)=>{const w=Math.pow(.7,i);sw+=w;sum+=w*vRating(v)});return sum/sw}
 function fracStars(x,big){let full=Math.floor(x),half=x-full>=.25&&x-full<.75,rounded=x-full>=.75;let f=full+(rounded?1:0);return `<span class="stars${big?" big":""}" title="${x.toFixed(1)} of 5" aria-label="${x.toFixed(1)} of 5">${"★".repeat(f)}${half?'<span class="half">★</span>':""}${"☆".repeat(5-f-(half?1:0))}</span>`}
 const rStars=(r,big)=>{let x=rRating(r);return x==null?"":fracStars(x,big)};
 const rNum=r=>{let x=rRating(r);return x==null?"":x.toFixed(1).replace(/\.0$/,"")};
@@ -246,7 +291,7 @@ LINK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2
 const DICE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/></svg>',
 BOWL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h18a9 9 0 0 1-18 0zM8 8c0-1.5 1-2 1-3.5M12 8c0-1.5 1-2 1-3.5M16 8c0-1.5 1-2 1-3.5"/></svg>';
 let animateNext=false,justReplaced=-1;
-const REPL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l6 6-6 6"/><path d="M13 6l6 6-6 6"/></svg>',
+const REPL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6l-6 6 6 6"/><path d="M11 6l-6 6 6 6"/></svg>',
 NOPE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>';
 const mapsSearch=r=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(r.name);
 function linkHtml(r,compact){if(r.link){let maps=isMaps(r.link),label=maps?(compact?"Maps":"Open in Maps"):new URL(r.link).hostname.replace(/^www\./,"");return`<a class="rlink" href="${esc(r.link)}" target="_blank" rel="noopener">${LINK}<span>${esc(label)}</span></a>`}
@@ -275,13 +320,19 @@ const propFactor=r=>Math.min(1.5,Math.max(.5,1+.07*(r.props||[]).reduce((a,k)=>a
 const wLabel=w=>`<span class="w" aria-label="${w>0?"+":"−"}${Math.abs(w)}">${`<i>${w>0?"<svg viewBox='0 0 12 12'><path d='M6 2.2v7.6M2.2 6h7.6' stroke='#fff' stroke-width='2' stroke-linecap='round'/></svg>":"<svg viewBox='0 0 12 12'><path d='M2.2 6h7.6' stroke='#fff' stroke-width='2' stroke-linecap='round'/></svg>"}</i>`.repeat(Math.abs(w))}</span>`;
 function propsHtml(r){let ps=(r.props||[]).map(k=>PROP[k]).filter(Boolean).sort((a,b)=>b.w-a.w);return ps.length?`<div class="props">${ps.map(p=>`<span class="prop ${p.w>0?"pos":"neg"}">${`<i>${p.w>0?"<svg viewBox='0 0 12 12'><path d='M6 2.2v7.6M2.2 6h7.6' stroke='#fff' stroke-width='2' stroke-linecap='round'/></svg>":"<svg viewBox='0 0 12 12'><path d='M2.2 6h7.6' stroke='#fff' stroke-width='2' stroke-linecap='round'/></svg>"}</i>`.repeat(Math.abs(p.w))}${esc(p.l)}</span>`).join("")}</div>`:""}
 const noteHtml=r=>r.note?.trim()?`<div class="note">${esc(r.note.trim())}</div>`:"";
+const PEN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg>';
 const BIN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
 const shortDish=d=>(d.no?d.no+" · ":"")+(d.name.length>20?d.name.slice(0,20).trimEnd()+"...":d.name);
 const CHEVR='<svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
 const dishLabel=d=>(d.no?d.no+" · ":"")+d.name;
 
 // Gerichte eines Restaurants zusammengefasst (neueste Bewertung zählt)
-function dishesOf(r){let m=new Map();visitsOf(r).reverse().forEach(v=>(v.dishes||[]).forEach(d=>{let k=lc(d.name);if(!k)return;let e=m.get(k)||{count:0,no:"",comment:""};m.set(k,{name:d.name.trim(),no:d.no||e.no,rating:d.rating,comment:d.comment||e.comment,count:e.count+1,date:v.date})}));return[...m.values()].sort((a,b)=>b.rating-a.rating||b.count-a.count)}
+function dishesOf(r,uk){let m=new Map();allRecords(r).reverse().forEach(v=>(v.dishes||[]).forEach(d=>{
+ let k=lc(d.name);if(!k)return;
+ if(uk&&d.by&&d.by!==uk)return;                                   // Gericht gehört dem anderen; ohne "by" zählt es für beide
+ let e=m.get(k)||{count:0,no:"",comment:""};
+ m.set(k,{name:d.name.trim(),no:d.no||e.no,rating:d.rating,comment:d.comment||e.comment,count:e.count+1,date:v.date,by:d.by||null})}));
+ return[...m.values()].sort((a,b)=>b.rating-a.rating||b.count-a.count)}
 function allTags(){let m=new Map();db.restaurants.forEach(r=>(r.tags||[]).forEach(t=>{let k=lc(t),e=m.get(k);m.set(k,{name:e?.name||t,n:(e?.n||0)+1})}));return[...m.values()].sort((a,b)=>b.n-a.n||a.name.localeCompare(b.name,"en"))}
 // Vorgegebene Tags (Sprache immer Englisch)
 const PRESET_TAGS=["Italian","Japanese","Chinese","Thai","Vietnamese","Korean","Indian","Lebanese","Israeli","Mexican","Spanish","Fusion","Asian",
@@ -382,7 +433,15 @@ if(tags.length){app.innerHTML=`<section class="hero">${measurePickerHtml(tags)}<
 let html=`<section class="hero"><h2>${esc(moodPrompt())}</h2>
 ${tags.length?pickerHtml(tags,pages):`<p class="muted">No tags yet. Add tags to your restaurants.</p>`}
 <div class="actions full">${any?`<button class="ghostbtn" id="resetTags">Reset</button>`:""}<button class="primary cta" id="roll">${DICE}${sugg?"Roll again":"Show suggestions"}</button></div></section>`;
-if(sugg){html+=sugg.list.length?`<div class="${animateNext?"anim":""}">${sugg.list.map((r,i)=>suggCard(r,i,sugg.pref,i===justReplaced,sugg.area)).join("")}</div>`:`<div class="card"><p class="muted">No restaurant matches your selection. Remove an exclusion.</p></div>`;
+{const c=window.cloudState;
+ if(c?.configured&&c.ready&&!c.user&&!sugg)html+=`<div class="card signin"><img class="ava" src="${USERS[0].pic}" alt=""><img class="ava second" src="${USERS[1].pic}" alt="">
+  <h2>Sign in to sync</h2><p class="muted">Michel and Oded share one list. Sign in with Google so your restaurants, visits and dishes stay in step on every device.</p>
+  <div class="actions" style="justify-content:center"><button class="primary" onclick="cloud.signIn()">Sign in with Google</button></div></div>`}
+if(sugg){html+=sugg.list.length?`<div class="${animateNext?"anim":""}">${(()=>{const pf=sugg.pref||[],hit=r=>pf.length&&(r.tags||[]).some(t=>pf.includes(lc(t)));
+  let split=-1;
+  if(pf.length){if(sugg.list.length&&!hit(sugg.list[0]))split=0;                 // gar kein Treffer: Hinweis ganz oben
+   else for(let k=1;k<sugg.list.length;k++){if(hit(sugg.list[k-1])&&!hit(sugg.list[k])){split=k;break}}}
+  return sugg.list.map((r,i)=>(i===split?`<div class="splitline"><span>${split===0?"No matches":"No more matches"} — other options</span></div>`:"")+suggCard(r,i,pf,i===justReplaced,sugg.area)).join("")})()}</div>`:`<div class="card"><p class="muted">No restaurant matches your selection. Remove an exclusion.</p></div>`;
 if(sugg.closed)html+=`<p class="small" style="margin:0 4px 12px">${sugg.closed} restaurant${sugg.closed>1?"s are":" is"} closed today and hidden.</p>`}
 {let sk=skippedToday().map(byId).filter(Boolean);if(sugg&&sk.length)html+=`<p class="small skipline">Not today: ${sk.map(r=>esc(r.name)).join(", ")} · <button class="link" id="undoSkip">Undo</button></p>`}
 html+=`<div class="actions"><button class="secondary" onclick="openTab('list')">Log a visit / add restaurant</button></div>`;
@@ -407,14 +466,14 @@ app.querySelectorAll("[data-rep]").forEach(b=>b.onclick=()=>{let i=+b.dataset.re
  renderToday(app)});
 $("#undoSkip")&&($("#undoSkip").onclick=()=>{setSkipped([]);sugg=suggest();animateNext=true;renderToday(app)})}
 
-function suggCard(r,i,pref,fresh,selArea){let areaMismatch=selArea&&r.area&&lc(r.area)!==lc(selArea);let v=lastVisit(r),ds=dishesOf(r),top=ds.filter(d=>d.rating>=3).slice(0,3),avoid=ds.filter(d=>d.rating<=1),n=(r.visits||[]).length;
+function suggCard(r,i,pref,fresh,selArea){let areaMismatch=selArea&&r.area&&lc(r.area)!==lc(selArea);let v=lastVisit(r),ds=dishesOf(r),top=ds.filter(d=>d.rating>=3).slice(0,3),avoid=ds.filter(d=>d.rating<=2).slice(-3),n=visitsOf(r).length;
 return`<article class="ticket ${i===0?"first":""} ${fresh?"fresh":""}" style="--d:${i}"><div class="t-head">${i===0?`<span class="toppick">Today’s top pick</span>`:""}<div class="t-line"><div class="t-num">${i+1}</div><div class="t-title"><h3><button class="tname" data-go="${r.id}" title="${esc(r.name)}">${esc(r.name)}</button></h3></div><div class="t-rate">${v?rStars(r):`<span class="tag new">New</span>`}</div></div><div class="linkrow">${r.area?`<span class="area ${areaMismatch?"off":""}">${PIN}<span class="atxt">${esc(r.area)}</span></span>`:""}${linkHtml(r,true)}</div></div>
 <div class="t-perf"></div><div class="t-body">
 <div class="muted">${when(r)}${n?` · ${n} visit${n>1?"s":""}`:" · from your wishlist"}</div>
-${r.tags?.length?`<div class="chips mini">${r.tags.map(t=>`<span class="chip ${pref.includes(lc(t))?"pref":""}">${esc(t)}</span>`).join("")}</div>`:""}${propsHtml(r)}${noteHtml(r)}
+${r.tags?.length?`<div class="chips mini">${[...r.tags].sort((a,b)=>(pref.includes(lc(b))?1:0)-(pref.includes(lc(a))?1:0)).map(t=>`<span class="chip ${pref.includes(lc(t))?"pref":""}">${esc(t)}</span>`).join("")}</div>`:""}${propsHtml(r)}${noteHtml(r)}
 ${top.length?`<button class="best" data-go="${r.id}">${BOWL}<div class="bl"><span class="bh">Best dishes</span><ul class="dl">${top.map(d=>`<li><span>${esc(shortDish(d))}</span><b>${d.rating}/5</b></li>`).join("")}</ul></div>${CHEVR}</button>`:""}
 ${avoid.length?`<button class="best avoid" data-go="${r.id}">${NOPE}<div class="bl"><span class="bh">Avoid</span><ul class="dl">${avoid.map(d=>`<li><span>${esc(shortDish(d))}</span></li>`).join("")}</ul></div>${CHEVR}</button>`:""}
-<div class="actions"><button class="primary sm" onclick="nav({view:'visit',rid:'${r.id}'})">Log visit</button><button class="secondary sm replace" data-rep="${i}" aria-label="Not today: ${esc(r.name)}">${REPL}<span>Not today</span></button></div></div></article>`}
+<div class="actions right"><button class="secondary sm replace" data-rep="${i}" aria-label="Not today: ${esc(r.name)}">${REPL}<span>Not today</span></button><button class="primary sm" onclick="nav({view:'visit',rid:'${r.id}'})">Log visit</button></div></div></article>`}
 
 // ---------- Liste ----------
 function renderList(app){app.innerHTML=`<div class="card"><div class="row"><h2>Restaurants</h2><button class="primary sm" id="newR">+ New</button></div>
@@ -479,17 +538,25 @@ else{$("#saveW").onclick=()=>{let t=commit();if(t)go({view:"detail",rid:t.id,tab
 $("#saveV").onclick=()=>{let t=commit();if(t){go({view:"detail",rid:t.id,tab:"list"},true);nav({view:"visit",rid:t.id})}}}}
 
 // ---------- Detail ----------
-function renderDetail(app,v){let r=byId(v.rid);if(!r)return back();let vs=visitsOf(r),ds=dishesOf(r),lv=vs[0];
+const dishHead=(u,n)=>`<div class="dishhead"><img class="ava" src="${u.pic}" alt="" width="36" height="36"><h2>${esc(u.label)}’s dishes</h2>${n?`<span class="dcount">${n}</span>`:""}</div>`;
+function renderDetail(app,v){let r=byId(v.rid);if(!r)return back();let vs=visitsOf(r),lv=vs[0];
 app.innerHTML=`<div class="card"><button class="link" onclick="back()">← Back</button>
 <div class="row top"><h2>${esc(r.name)}</h2>${lv?`<span class="rscore">${rStars(r,true)}<small>${rNum(r)}</small></span>`:`<span class="tag new">Wishlist</span>`}</div><div class="linkrow">${r.area?`<span class="area">${PIN}<span class="atxt">${esc(r.area)}</span></span>`:""}${linkHtml(r,true)}</div>
 <div class="muted">${when(r)}${vs.length?` · ${vs.length} visit${vs.length>1?"s":""}`:""}${r.closed?.length?` · Closed: ${r.closed.map(i=>DAYS[i]).join(", ")}`:""}</div>
+
 ${r.tags?.length?`<div class="chips mini">${r.tags.map(t=>`<span class="chip">${esc(t)}</span>`).join("")}</div>`:""}${propsHtml(r)}${noteHtml(r)}
 <div class="actions"><button class="primary" onclick="nav({view:'visit',rid:'${r.id}'})">Log visit</button><button class="secondary" onclick="nav({view:'edit',rid:'${r.id}'})">Edit</button><button class="iconbtn big" style="margin-left:auto" onclick="delRest('${r.id}')" aria-label="Delete restaurant" title="Delete restaurant">${BIN}</button></div></div>
-${ds.length?`<div class="card"><h3>Dishes</h3>${ds.map((d,i)=>`<div class="dish drow"><div class="dname">${esc(dishLabel(d))}</div>${stars(d.rating)}<button class="secondary sm" data-dedit="${i}">Edit</button><button class="iconbtn" data-ddel="${i}" aria-label="Delete ${esc(d.name)}" title="Delete">${BIN}</button>${d.comment?`<div class="small dcom">${esc(d.comment)}</div>`:""}</div>`).join("")}</div>`:""}
-<div class="card"><h3>Visits</h3>${vs.length?vs.map(x=>`<div class="visit"><div class="drow"><strong>${fmt(x.date)}</strong>${stars(x.rating)}<button class="secondary sm" onclick="nav({view:'visit',rid:'${r.id}',vid:'${x.id}'})">Edit</button><button class="iconbtn" onclick="delVisit('${r.id}','${x.id}')" aria-label="Delete visit" title="Delete visit">${BIN}</button></div>${x.dishes?.length?`<div class="small">${x.dishes.map(d=>`${esc(dishLabel(d))}: ${d.rating}/5${d.comment?` – ${esc(d.comment)}`:""}`).join("<br>")}</div>`:""}</div>`).join(""):`<p class="muted">No visits logged yet.</p>`}</div>
+${orderedUsers().map(u=>{const all=dishesOf(r,u.k);if(!all.length)return`<div class="card">${dishHead(u,0)}<p class="muted">Nothing logged yet.</p></div>`;
+ const open=dishOpen[u.k],many=all.length>8;
+ const shown=(!many||open)?all:[...all.slice(0,5),...all.slice(-3)];
+ const gapAfter=(!many||open)?-1:4;
+ return`<div class="card">${dishHead(u,all.length)}${shown.map((d,i)=>`<div class="dishitem"><div class="dtop"><span class="dname">${esc(dishLabel(d))}</span>${stars(d.rating)}<button class="ibtn" data-dedit="${esc(lc(d.name))}" aria-label="Edit ${esc(d.name)}" title="Edit">${PEN}</button><button class="ibtn del" data-ddel="${esc(lc(d.name))}" aria-label="Delete ${esc(d.name)}" title="Delete">${BIN}</button></div>${d.comment?`<div class="dcom">${esc(d.comment)}</div>`:""}</div>${i===gapAfter?`<div class="dgap">… ${all.length-8} more</div>`:""}`).join("")}
+ ${many?`<button class="expander ${open?"open":""}" data-dishall="${u.k}">${open?"Show fewer":`Show all ${all.length} dishes`}${CHEV}</button>`:""}</div>`}).join("")}
+<div class="card"><h3>Visits</h3>${vs.length?vs.map(x=>`<div class="visit"><div class="drow"><strong>${fmt(x.date)}</strong>${vRating(x)!=null?stars(vRating(x)):""}<button class="secondary sm" onclick="nav({view:'visit',rid:'${r.id}',vid:'${x.id}'})">Edit</button><button class="iconbtn" onclick="delVisit('${r.id}','${x.id}')" aria-label="Delete visit" title="Delete visit">${BIN}</button></div>${x.dishes?.length?`<div class="small">${x.dishes.map(d=>`${esc(dishLabel(d))}${d.by?` (${esc(userLabel(d.by))})`:""}: ${d.rating}/5${d.comment?` – ${esc(d.comment)}`:""}`).join("<br>")}</div>`:""}</div>`).join(""):`<p class="muted">No visits logged yet.</p>`}</div>
 `;
-app.querySelectorAll("[data-dedit]").forEach(b=>b.onclick=()=>{let d=ds[+b.dataset.dedit];if(d)nav({view:"dish",rid:r.id,key:lc(d.name)})});
-app.querySelectorAll("[data-ddel]").forEach(b=>b.onclick=()=>{let d=ds[+b.dataset.ddel];if(d)deleteDish(r,lc(d.name),d)})}
+app.querySelectorAll("[data-dedit]").forEach(b=>b.onclick=()=>nav({view:"dish",rid:r.id,key:b.dataset.dedit}));
+app.querySelectorAll("[data-ddel]").forEach(b=>b.onclick=()=>{const d=dishesOf(r).find(x=>lc(x.name)===b.dataset.ddel);if(d)deleteDish(r,b.dataset.ddel,d)});
+app.querySelectorAll("[data-dishall]").forEach(b=>b.onclick=()=>{const k=b.dataset.dishall;dishOpen[k]=!dishOpen[k];render()})}
 async function deleteDish(r,key,d){if(!await ask(`Delete “${d.name}”${d.count>1?` from all ${d.count} visits`:""}?`,"Delete",true))return;r.visits.forEach(vv=>{if((vv.dishes||[]).some(x=>lc(x.name)===key)){vv.dishes=vv.dishes.filter(x=>lc(x.name)!==key);vv.updatedAt=Date.now()}});r.updatedAt=Date.now();save();sugg=null;render()}
 async function delVisit(rid,vid){let r=byId(rid);if(!r||!await ask("Delete this visit?","Delete",true))return;
  (db.deletedVisits??=[]).push({vid,at:Date.now()});if(db.deletedVisits.length>500)db.deletedVisits=db.deletedVisits.slice(-500);
@@ -500,46 +567,59 @@ async function delRest(rid){let r=byId(rid);if(!r||!await ask(`Delete “${r.nam
 
 // ---------- Gericht bearbeiten ----------
 function renderDish(app,v){let r=byId(v.rid),d=r&&dishesOf(r).find(x=>lc(x.name)===v.key);if(!d){app.innerHTML=`<div class="card"><button class="link" onclick="back()">← Back</button><p class="muted">This dish no longer exists.</p></div>`;return}
-let f=v.form||(v.form={name:d.name,no:d.no||"",rating:d.rating,comment:d.comment||""});
+let f=v.form||(v.form={name:d.name,no:d.no||"",rating:d.rating,comment:d.comment||"",by:d.by||null});
 app.innerHTML=`<div class="card"><button class="link" onclick="back()">← Back</button><h2>Edit dish</h2><div class="muted">${esc(r.name)} · eaten ${d.count}×</div>
 <div class="dgrid" style="grid-template-columns:80px minmax(0,1fr);margin-top:14px"><label class="lbl" style="margin:0">No.<input id="dNo" value="${esc(f.no)}" autocomplete="off"></label><label class="lbl" style="margin:0">Name<input id="dName" value="${esc(f.name)}" autocomplete="off"></label></div>
 <div class="lbl">Current rating</div>${rater("dr",f.rating)}
 <label class="lbl">Comment (optional)<input id="dCom" value="${esc(f.comment)}" autocomplete="off"></label>
+<div class="lbl">Who ate it</div>${byPicker("d",f.by)}
 <p class="small" style="margin-top:10px">Name and number change on all ${d.count} visit${d.count===1?"":"s"}. Rating and comment apply to the most recent one.</p>
 <div class="actions"><button class="primary" id="dSave">Save</button><button class="secondary" onclick="back()">Cancel</button><button class="danger" id="dDel" style="margin-left:auto">Delete</button></div></div>`;
 $("#dNo").oninput=e=>f.no=e.target.value;$("#dName").oninput=e=>f.name=e.target.value;$("#dCom").oninput=e=>f.comment=e.target.value;
-app.onclick=e=>{let b=e.target.closest(".rate button");if(!b)return;b.parentElement.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));f.rating=+b.dataset.n};
-const occ=()=>visitsOf(r).flatMap(vv=>(vv.dishes||[]).filter(x=>lc(x.name)===v.key));
+app.onclick=e=>{let b=e.target.closest(".rate button");
+ if(b){b.parentElement.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));f.rating=+b.dataset.n;return}
+ let by=e.target.closest(".bysel button");if(by){f.by=by.dataset.v||null;by.parentElement.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===by))}};
+const occ=()=>allRecords(r).flatMap(vv=>(vv.dishes||[]).filter(x=>lc(x.name)===v.key));
 $("#dSave").onclick=async()=>{let name=f.name.trim().replace(/\s+/g," ");if(!name){say("Please enter a name.");return}
  let other=dishesOf(r).find(x=>lc(x.name)===lc(name)&&lc(x.name)!==v.key);if(other&&!await ask(`“${other.name}” already exists here. Merge both dishes?`,"Merge"))return;
- let all=occ();all.forEach((x,i)=>{x.name=name;x.no=f.no.trim();if(i===0){x.rating=f.rating;x.comment=f.comment.trim()}else x.comment=""});
- visitsOf(r).forEach(vv=>{if((vv.dishes||[]).some(x=>lc(x.name)===name.toLowerCase()||lc(x.name)===v.key))vv.updatedAt=Date.now()});
+ let all=occ();all.forEach((x,i)=>{x.name=name;x.no=f.no.trim();x.by=f.by||null;if(i===0){x.rating=f.rating;x.comment=f.comment.trim()}else x.comment=""});
+ allRecords(r).forEach(vv=>{if((vv.dishes||[]).some(x=>lc(x.name)===name.toLowerCase()||lc(x.name)===v.key))vv.updatedAt=Date.now()});
  save();sugg=null;app.onclick=null;back()};
 $("#dDel").onclick=async()=>{if(!await ask(`Delete “${d.name}”${d.count>1?` from all ${d.count} visits`:""}?`,"Delete",true))return;r.visits.forEach(vv=>{if((vv.dishes||[]).some(x=>lc(x.name)===v.key)){vv.dishes=vv.dishes.filter(x=>lc(x.name)!==v.key);vv.updatedAt=Date.now()}});save();sugg=null;app.onclick=null;back()}}
 
 // ---------- Besuch ----------
-const rater=(id,val)=>`<div class="rate" data-rate="${id}" role="group" aria-label="Rating 0 to 5">${[0,1,2,3,4,5].map(n=>`<button type="button" data-n="${n}" class="${n===val?"on":""}">${n}</button>`).join("")}</div>`;
+const rater=(id,val)=>`<div class="rate" data-rate="${id}" role="group" aria-label="Rating 1 to 5">${[1,2,3,4,5].map(n=>`<button type="button" data-n="${n}" class="${n===val?"on":""}">${n}</button>`).join("")}</div>`;
+// Wer hat das Gericht gegessen: einer von beiden oder beide
+const byPicker=(i,by)=>`<div class="bysel" data-by="${i}">${orderedUsers().map(u=>`<button type="button" data-v="${u.k}" class="${by===u.k?"on":""}">${esc(u.label)}</button>`).join("")}<button type="button" data-v="" class="${by?"":"on"}">Both</button></div>`;
 function renderVisit(app,v){let r=byId(v.rid);if(!r)return back();let orig=v.vid?(r.visits||[]).find(x=>x.id===v.vid):null,lv=lastVisit(r),known=dishesOf(r);
-let f=v.form||(v.form=orig?JSON.parse(JSON.stringify(orig)):{date:isoToday(),rating:lv?lv.rating:3,dishes:[{name:"",no:"",rating:3,comment:""}]});
+const me=meKey();
+let f=v.form||(v.form=orig?JSON.parse(JSON.stringify(orig)):{date:isoToday(),rating:lv?vRating(lv)??3:3,dishes:[{name:"",no:"",rating:3,comment:"",by:me}]});
+if(f.rating==null)f.rating=vRating(f)??3;
+f.dishes.forEach(d=>{if(d.by===undefined)d.by=me});
 app.innerHTML=`<div class="card"><button class="link" onclick="back()">← Back</button><h2>${orig?"Edit visit":"Log visit"}</h2><div class="muted">${esc(r.name)}</div>
 <label class="lbl">Date<input type="date" id="vDate" value="${f.date}"></label>
 <div class="lbl">Restaurant rating</div>${rater("r",f.rating)}
-${lv&&!orig?`<div class="small" style="margin-top:6px">Last rating: ${lv.rating}/5 (${fmt(lv.date)}). Pre-filled, change if needed.</div>`:""}</div>
+${lv&&!orig&&vRating(lv)!=null?`<div class="small" style="margin-top:6px">Last rating: ${vRating(lv)}/5 (${fmt(lv.date)}). Pre-filled, change if needed.</div>`:""}</div>
 <div class="card"><h3>Dishes</h3><div id="dishes"></div><button class="secondary" id="addDish">+ Dish</button></div>
 <div class="actions" style="margin-top:0"><button class="primary" id="saveVisit">Save</button><button class="secondary" onclick="back()">Cancel</button></div>`;
 const findKnown=(k,val)=>known.find(d=>k==="no"?d.no&&lc(d.no)===lc(val):lc(d.name)===lc(val));
 const lastHint=k=>`Last time: ${k.rating}/5${k.comment?` – ${esc(k.comment)}`:""}`;
-const drawDishes=()=>{$("#dishes").innerHTML=f.dishes.map((d,i)=>{let k=findKnown("name",d.name);return`<div class="dishrow" data-i="${i}"><div class="dgrid"><input data-k="no" placeholder="No." value="${esc(d.no)}" autocomplete="off"><input data-k="name" placeholder="Dish" value="${esc(d.name)}" autocomplete="off"><button type="button" class="x" data-del="${i}" aria-label="Remove dish">×</button></div><div class="small lasthint" style="margin-top:5px">${k?lastHint(k):""}</div>${rater("d"+i,d.rating)}<input data-k="comment" placeholder="Comment (optional)" value="${esc(d.comment)}"></div>`}).join("")||`<p class="muted">No dishes added.</p>`};
+const drawDishes=()=>{$("#dishes").innerHTML=f.dishes.map((d,i)=>{let k=findKnown("name",d.name);return`<div class="dishrow" data-i="${i}"><div class="dgrid"><input data-k="no" placeholder="No." value="${esc(d.no)}" autocomplete="off"><input data-k="name" placeholder="Dish" value="${esc(d.name)}" autocomplete="off"><button type="button" class="x" data-del="${i}" aria-label="Remove dish">×</button></div><div class="small lasthint" style="margin-top:5px">${k?lastHint(k):""}</div>${rater("d"+i,d.rating)}<input data-k="comment" placeholder="Comment (optional)" value="${esc(d.comment)}">${byPicker(i,d.by)}</div>`}).join("")||`<p class="muted">No dishes added.</p>`};
 drawDishes();
 $("#dishes").oninput=e=>{let el=e.target.closest("[data-k]");if(el)f.dishes[+el.closest(".dishrow").dataset.i][el.dataset.k]=el.value};
 $("#dishes").onchange=e=>{let el=e.target.closest("[data-k]");if(!el||el.dataset.k==="comment")return;let d=f.dishes[+el.closest(".dishrow").dataset.i],k=findKnown(el.dataset.k,el.value);
 let row=el.closest(".dishrow");if(k&&el.dataset.k==="name"&&!d.no){d.no=k.no||"";row.querySelector("[data-k=no]").value=d.no}if(k&&el.dataset.k==="no"&&!d.name.trim()){d.name=k.name;row.querySelector("[data-k=name]").value=d.name}
 let kn=findKnown("name",d.name);row.querySelector(".lasthint").innerHTML=kn?lastHint(kn):""};  // kein Neuaufbau: sonst geht der nächste Klick (× oder Bewertung) ins Leere
-app.onclick=e=>{let b=e.target.closest(".rate button");if(b){let g=b.parentElement,n=+b.dataset.n;g.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));if(g.dataset.rate==="r")f.rating=n;else f.dishes[+g.dataset.rate.slice(1)].rating=n;return}
-let del=e.target.closest("[data-del]");if(del){f.dishes.splice(+del.dataset.del,1);drawDishes()}};
+app.onclick=e=>{let b=e.target.closest(".rate button");
+ if(b){let g=b.parentElement,n=+b.dataset.n;g.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
+  const id=g.dataset.rate;
+  if(id==="r")f.rating=n;else f.dishes[+id.slice(1)].rating=n;return}
+ let by=e.target.closest(".bysel button");if(by){const box=by.closest("[data-by]");f.dishes[+box.dataset.by].by=by.dataset.v||null;
+  box.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===by));return}
+ let del=e.target.closest("[data-del]");if(del){f.dishes.splice(+del.dataset.del,1);drawDishes()}};
 $("#vDate").onchange=e=>f.date=e.target.value;
-$("#addDish").onclick=()=>{f.dishes.push({name:"",no:"",rating:3,comment:""});drawDishes();let ins=$("#dishes").querySelectorAll("[data-k=name]");ins[ins.length-1]?.focus()};
-$("#saveVisit").onclick=()=>{let data={date:f.date||isoToday(),rating:f.rating,dishes:f.dishes.map(d=>({name:d.name.trim(),no:String(d.no||"").trim(),rating:d.rating,comment:d.comment.trim()})).filter(d=>d.name||d.no).map(d=>({...d,name:d.name||"No. "+d.no}))};
+$("#addDish").onclick=()=>{f.dishes.push({name:"",no:"",rating:3,comment:"",by:meKey()});drawDishes();let ins=$("#dishes").querySelectorAll("[data-k=name]");ins[ins.length-1]?.focus()};
+$("#saveVisit").onclick=()=>{let data={date:f.date||isoToday(),rating:f.rating,ratings:undefined,dishes:f.dishes.map(d=>({name:d.name.trim(),no:String(d.no||"").trim(),rating:d.rating,comment:d.comment.trim(),by:d.by||null})).filter(d=>d.name||d.no).map(d=>({...d,name:d.name||"No. "+d.no}))};
 data.updatedAt=Date.now();if(orig)Object.assign(orig,data);else(r.visits??=[]).push({id:uid(),created:Date.now(),...data});save();sugg=null;app.onclick=null;back()}}
 
 // ---------- Daten ----------
@@ -557,7 +637,7 @@ return`<div class="card"><h2>Stats</h2><div class="statgrid"><div class="stat"><
 ${topTags.length?`<div><h3>Most visited tags</h3><ul class="slist">${topTags.map(([g,n])=>li(esc(g),n+" visit"+(n===1?"":"s"))).join("")}</ul></div>`:""}
 ${dishes.length?`<div><h3>Favourite dishes</h3><ul class="slist">${dishes.map(d=>li(`${esc(d.name)} <small>${esc(d.r.name)}</small>`,d.rating+"/5")).join("")}</ul></div>`:""}</div>
 <p class="small" style="margin-top:12px">${db.restaurants.length} restaurant${db.restaurants.length===1?"":"s"} in total, ${db.restaurants.filter(r=>!r.visits?.length).length} on the wishlist.</p></div>`}
-let tagsExpanded=false,areasExpanded=false;
+let tagsExpanded=false,areasExpanded=false,dishOpen={};
 const CHEV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 function areasHtml(){let all=[...new Set([...areaCatalog(),...usedAreas()])],cnt={};db.restaurants.forEach(r=>{if(r.area)cnt[lc(r.area)]=(cnt[lc(r.area)]||0)+1});
 let rows=all.map(a=>({name:a,n:cnt[lc(a)]||0})).sort((x,y)=>y.n-x.n||x.name.localeCompare(y.name,"en"));
@@ -603,7 +683,7 @@ app.innerHTML=statsHtml()+areasHtml()+tagsHtml()+`<div class="card"><h2>Cloud ba
 <div class="actions"><button class="primary" onclick="exportData()">Export data</button><label class="secondary" style="display:inline-block;cursor:pointer">Import backup<input type="file" id="imp" accept=".json,application/json" style="display:none"></label></div></div>
 ${pendingImport?`<div class="card importbox" id="importBox"><h3>Import “${esc(pendingImport.name)}”</h3><p class="muted">${pendingImport.data.restaurants.length} restaurants in this backup. How should it be imported?</p><div class="actions"><button class="primary" onclick="doImport('merge')">Merge</button><button class="danger" onclick="doImport('replace')">Replace all</button><button class="secondary" onclick="pendingImport=null;render()">Cancel</button></div><p class="small" style="margin-top:8px"><b>Merge</b> adds new restaurants and visits and keeps everything you already have. <b>Replace all</b> deletes your current data first.</p></div>`:""}${importMsg?`<div class="card"><p class="small" style="margin:0;color:var(--herb)">${esc(importMsg)}</p></div>`:""}
 <div class="card"><h2>Reset</h2><p class="small">Clears the data on this device and signs you out of the cloud. Your cloud backup stays, so signing in again restores everything.</p><button class="danger" onclick="resetLocal()">Clear this device</button>${window.cloudState?.user?`<details class="wipe"><summary>Delete cloud backup permanently</summary><p class="small">This erases the copy in your Google account for good. It cannot be undone.</p><button class="dangerfill" onclick="wipeCloud()">Delete cloud backup</button></details>`:""}</div>
-<div class="card version"><h3>App version</h3><p class="verno">${APP_VERSION}</p><p class="small">This must match on all your devices. If it differs, fully reload the app there.</p></div>`;
+<div class="card"><h2>Version</h2><p class="verno">${APP_VERSION}</p><p class="small">Must match on all your devices. If it differs, fully reload the app there.</p><p class="credit">Cooked up by <strong>Merekat</strong> — because deciding where to eat shouldn’t take longer than eating.</p></div>`;
 $("#imp").onchange=importData;app.querySelectorAll("[data-aren]").forEach(b=>b.onclick=()=>renameArea(b.dataset.aren));app.querySelectorAll("[data-adel]").forEach(b=>b.onclick=()=>deleteArea(b.dataset.adel));$("#areaToggle")&&($("#areaToggle").onclick=()=>{areasExpanded=!areasExpanded;render();if(!areasExpanded)$("#areaCard").scrollIntoView({block:"start"})});$("#addArea")&&($("#addArea").onclick=addCatalogArea);$("#newArea")&&($("#newArea").onkeydown=e=>{if(e.key==="Enter")addCatalogArea()});app.querySelectorAll("[data-tren]").forEach(b=>b.onclick=()=>renameTag(b.dataset.tren));$("#tagToggle")&&($("#tagToggle").onclick=()=>{tagsExpanded=!tagsExpanded;render();if(!tagsExpanded)$("#tagCard").scrollIntoView({block:"start"})});$("#addTag").onclick=addCatalogTag;$("#newTag").onkeydown=e=>{if(e.key==="Enter")addCatalogTag()};app.querySelectorAll("[data-tdel]").forEach(b=>b.onclick=()=>deleteTag(b.dataset.tdel));navigator.storage?.persisted?.().then(p=>{let el=$("#pstat");if(el)el.textContent=p?"Storage is marked as persistent: Chrome won’t clear it when space runs low.":"Local storage isn’t marked as persistent. With cloud backup that’s not a problem."})}
 async function exportData(){let name="forkcast-backup-"+isoToday()+".json",json=JSON.stringify(db,null,2);
 try{let file=new File([json],name,{type:"application/json"});if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:name});return done()}}catch(e){if(e.name==="AbortError")return}
@@ -645,7 +725,7 @@ function mergeDbs(target,source){
  if(target.deletedRestaurants.length>300)target.deletedRestaurants=target.deletedRestaurants.slice(-300);
  target.restaurants=target.restaurants.filter(r=>!delIds.has(r.id));                       // respektiert Löschungen von jeder Seite
  let newR=0,newV=0;
- const sameVisit=(a,b)=>a.id===b.id||(a.date===b.date&&a.rating===b.rating&&JSON.stringify((a.dishes||[]).map(d=>lc(d.name)).sort())===JSON.stringify((b.dishes||[]).map(d=>lc(d.name)).sort()));
+ const sameVisit=(a,b)=>a.id===b.id||(!a.dishOnly&&!b.dishOnly&&a.date===b.date&&a.rating===b.rating&&JSON.stringify((a.dishes||[]).map(d=>lc(d.name)).sort())===JSON.stringify((b.dishes||[]).map(d=>lc(d.name)).sort()));
  (source.restaurants||[]).forEach(ir=>{
   if(delIds.has(ir.id))return;                                                             // nicht wiederbeleben, was gelöscht wurde
   let r=target.restaurants.find(x=>x.id===ir.id)||target.restaurants.find(x=>lc(x.name)===lc(ir.name));
@@ -674,7 +754,7 @@ function mergeDbs(target,source){
  target.restaurants.sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
  target.restaurants.forEach(r=>{
   if(r.visits){r.visits.sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
-   r.visits.forEach(v=>{if(v.dishes)v.dishes.sort((a,b)=>{let n=lc(a.name).localeCompare(lc(b.name));return n||lc(a.no||"").localeCompare(lc(b.no||""))})})}
+   r.visits.forEach(v=>{if(v.dishes)v.dishes.sort((a,b)=>lc(a.name).localeCompare(lc(b.name))||lc(a.no||"").localeCompare(lc(b.no||""))||String(a.by||"").localeCompare(String(b.by||"")))})}
   if(r.tags)r.tags.sort((a,b)=>lc(a)<lc(b)?-1:lc(a)>lc(b)?1:0);                             // sonst dieselbe Ping-Pong-Gefahr wie oben, nur pro Restaurant
   normR(r);r.props.sort();
   if(r.closed)r.closed.sort((a,b)=>a-b)
