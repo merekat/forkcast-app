@@ -226,7 +226,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <main id="app"></main>
 <script>
 const KEY="wohinEssenV1";
-const APP_VERSION="2026-09-30a";
+const APP_VERSION="2026-09-30b";
 let db=load(),stack=[{tab:"today"}],tagState={},sugg=null,listQuery="",listSort="oldest",currentArea=null;
 
 function load(){try{let v=JSON.parse(localStorage.getItem(KEY)||"null");if(v&&Array.isArray(v.restaurants))return v}catch(e){}return{restaurants:[]}}
@@ -296,7 +296,7 @@ NOPE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2
 const mapsSearch=r=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(r.name);
 function linkHtml(r,compact){if(r.link){let maps=isMaps(r.link),label=maps?(compact?"Maps":"Open in Maps"):new URL(r.link).hostname.replace(/^www\./,"");return`<a class="rlink" href="${esc(r.link)}" target="_blank" rel="noopener">${LINK}<span>${esc(label)}</span></a>`}
 return`<a class="rlink ghost" href="${esc(mapsSearch(r))}" target="_blank" rel="noopener">${LINK}<span>${compact?"Search":"Search in Maps"}</span></a>`}
-// Eigenschaften: w = Gewicht (je Punkt ±7 %, gesamt max. ±50 %), x = schließt sich gegenseitig aus
+// Eigenschaften: w = Gewicht (je Punkt ±5 %, gesamt max. ±50 %), x = schließt sich gegenseitig aus
 const PROPS=[
  // Price
  {k:"billig",l:"Cheap",w:1,x:"teuer",g:"Price",s:"Price"},{k:"teuer",l:"Expensive",w:-2,x:"billig",g:"Price",s:"Price"},
@@ -316,7 +316,7 @@ const PROPS=[
  {k:"reservierung",l:"Booking needed",w:-1,s:"Other"}];
 const PSECTIONS=["Price","Food","Ambience","Service","Other"];
 const PROP=Object.fromEntries(PROPS.map(p=>[p.k,p]));
-const propFactor=r=>Math.min(1.5,Math.max(.5,1+.07*(r.props||[]).reduce((a,k)=>a+(PROP[k]?.w||0),0)));
+const propFactor=r=>Math.min(1.35,Math.max(.65,1+.05*(r.props||[]).reduce((a,k)=>a+(PROP[k]?.w||0),0)));
 const wLabel=w=>`<span class="w" aria-label="${w>0?"+":"−"}${Math.abs(w)}">${`<i>${w>0?"<svg viewBox='0 0 12 12'><path d='M6 2.2v7.6M2.2 6h7.6' stroke='#fff' stroke-width='2' stroke-linecap='round'/></svg>":"<svg viewBox='0 0 12 12'><path d='M2.2 6h7.6' stroke='#fff' stroke-width='2' stroke-linecap='round'/></svg>"}</i>`.repeat(Math.abs(w))}</span>`;
 function propsHtml(r){let ps=(r.props||[]).map(k=>PROP[k]).filter(Boolean).sort((a,b)=>b.w-a.w);return ps.length?`<div class="props">${ps.map(p=>`<span class="prop ${p.w>0?"pos":"neg"}">${`<i>${p.w>0?"<svg viewBox='0 0 12 12'><path d='M6 2.2v7.6M2.2 6h7.6' stroke='#fff' stroke-width='2' stroke-linecap='round'/></svg>":"<svg viewBox='0 0 12 12'><path d='M2.2 6h7.6' stroke='#fff' stroke-width='2' stroke-linecap='round'/></svg>"}</i>`.repeat(Math.abs(p.w))}${esc(p.l)}</span>`).join("")}</div>`:""}
 const noteHtml=r=>r.note?.trim()?`<div class="note">${esc(r.note.trim())}</div>`:"";
@@ -412,7 +412,7 @@ let rt=v?rRating(r)/5:.6,                                   // Restaurantbewertu
 if(v&&d<7)s*=.3;                                          // in der letzten Woche dort gewesen
 let m=pref.length?tl.filter(t=>pref.includes(t)).length:0;if(m)s*=1+.5*m;           // mehrere passende Tags: innerhalb der Gruppe bevorzugt
 let here=!area||lc(r.area)===lc(area);if(!here)s*=.05;                     // anderer Ort: stark abgewertet
-pool.push({r,m,w:(Math.pow(s,1.5)+.01)*propFactor(r)})});  // Eigenschaften: ±7 % je Punkt, max. ±50 %                   // hoch 1,5 = gute Treffer bevorzugt, aber mit Abwechslung
+pool.push({r,m,w:(Math.pow(s,1.5)+.01)*propFactor(r)})});  // Eigenschaften: ±5 % je Punkt, max. ±35 %                   // hoch 1,5 = gute Treffer bevorzugt, aber mit Abwechslung
 // Bevorzugte Tags: gestaffelt nach Anzahl Treffer, innerhalb jeder Stufe gewichtet gewürfelt
 const draw=g=>{let out=[];while(out.length<n&&g.length){let sum=g.reduce((a,x)=>a+x.w,0),x=Math.random()*sum,i=0;while(i<g.length-1&&(x-=g[i].w)>0)i++;out.push(g.splice(i,1)[0].r)}return out};
 let levels=[...new Set(pool.map(x=>x.m))].sort((a,b)=>b-a);                // mehr Treffer = weiter oben
@@ -535,7 +535,7 @@ app.innerHTML=`<div class="card"><button class="link" onclick="back()">← Back<
 <label class="lbl">Area / district</label><div class="ac" id="areaAc"><input id="fArea" value="${esc(f.area)}" placeholder="e.g. Friedrichshain" autocomplete="off" enterkeyhint="done"><div class="aclist" id="areaSug"></div></div>
 <label class="lbl">Link (optional, ideally Google Maps)<input id="fLink" type="url" inputmode="url" placeholder="Paste link" value="${esc(f.link)}" autocomplete="off"></label><div class="small" id="linkHint"></div>
 <div class="lbl">Tags</div><div id="tagEd"></div>
-<div class="lbl">Traits <span class="small">(affect how often it gets suggested)</span></div>
+<div class="lbl">Traits <span class="small">(each point shifts how often it gets suggested by 5 %, up to 35 %)</span></div>
 <div class="propbox" id="propBox">${PSECTIONS.map(sec=>{let ps=PROPS.filter(p=>p.s===sec),groups=[...new Set(ps.filter(p=>p.g).map(p=>p.g))],singles=ps.filter(p=>!p.g);return`<div class="psec"><h4>${sec}</h4>${groups.map(g=>`<div class="prow ${g===sec?"nolabel":""}">${g===sec?"":`<span>${g}</span>`}${ps.filter(p=>p.g===g).map(propBtn).join("")}</div>`).join("")}${singles.length?`<div class="pgrid">${singles.map(propBtn).join("")}</div>`:""}</div>`}).join("")}</div>
 <label class="lbl">Note (optional)<textarea id="fNote" rows="3" placeholder="e.g. book ahead on weekends, ask for a window table">${esc(f.note)}</textarea></label>
 <div class="lbl">Closed on (optional)</div><div class="chips">${DAYS.map((d,i)=>`<button type="button" class="chip ${f.closed.includes(i)?"excl":""}" data-day="${i}">${d}</button>`).join("")}</div>
