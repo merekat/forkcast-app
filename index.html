@@ -226,7 +226,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <main id="app"></main>
 <script>
 const KEY="wohinEssenV1";
-const APP_VERSION="2026-09-29p";
+const APP_VERSION="2026-09-30a";
 let db=load(),stack=[{tab:"today"}],tagState={},sugg=null,listQuery="",listSort="oldest",currentArea=null;
 
 function load(){try{let v=JSON.parse(localStorage.getItem(KEY)||"null");if(v&&Array.isArray(v.restaurants))return v}catch(e){}return{restaurants:[]}}
@@ -355,9 +355,34 @@ const cur=()=>stack[stack.length-1];
 function go(v,replace){if(replace)stack[stack.length-1]=v;else{stack.push(v);history.pushState({},"")}render();scrollTo(0,0)}
 function nav(v){v.tab=v.tab||cur().tab||"list";go(v)}
 function back(){if(stack.length>1)history.back();else{stack=[{tab:"today"}];render()}}
-addEventListener("popstate",()=>{if(stack.length>1){stack.pop();render()}});
-function openTab(t){let n=stack.length-1;stack=[{tab:t}];if(n>0)history.go(-n);render();scrollTo(0,0)}
+// Beim Zurückfahren mehrerer Schritte melden sich mehrere popstate-Ereignisse - die zählen wir mit,
+// damit der Stapel nicht doppelt abgebaut wird.
+let ignorePops=0;
+addEventListener("popstate",()=>{if(ignorePops>0){ignorePops--;return}if(stack.length>1){stack.pop();render()}});
+function dropTo(depth){const n=stack.length-depth;if(n>0){stack=stack.slice(0,depth);ignorePops+=n;history.go(-n)}}
+// "Today" ist immer die unterste Ebene. Ein anderer Reiter liegt eine Ebene darüber, deshalb führt
+// die Zurück-Geste dort erst nach Today und schließt die App erst beim zweiten Mal.
+function openTab(t){
+ if(t==="today"){dropTo(1);stack[0]={tab:"today"}}
+ else if(stack.length>=2){dropTo(2);stack[1]={tab:t}}
+ else{stack.push({tab:t});history.pushState({},"")}
+ render();scrollTo(0,0)}
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>openTab(b.dataset.tab));
+// Wischgeste zum Reiterwechsel. Bereiche, die selbst seitlich scrollen (Tag-Slider, Ortsauswahl,
+// gewählte Tags) sowie Eingaben und Dialoge sind ausgenommen.
+const TABS=["today","list","data"];
+const NOSWIPE=".slider,.chips.picked,.areasel,.areamenu,.modal,input,textarea,select,.aclist";
+let swX=0,swY=0,swT=0,swOk=false;
+addEventListener("touchstart",e=>{
+ if(e.touches.length!==1||cur().view||document.querySelector(".modal")){swOk=false;return}
+ const t=e.touches[0];swOk=!e.target.closest(NOSWIPE);swX=t.clientX;swY=t.clientY;swT=Date.now()},{passive:true});
+addEventListener("touchend",e=>{
+ if(!swOk)return;swOk=false;
+ const t=e.changedTouches[0],dx=t.clientX-swX,dy=t.clientY-swY;
+ if(Date.now()-swT>700)return;
+ if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.8)return;        // zu kurz oder eher senkrecht
+ const i=TABS.indexOf(cur().tab||"today");if(i<0)return;
+ const j=i+(dx<0?1:-1);if(j>=0&&j<TABS.length)openTab(TABS[j])},{passive:true});   // nach links wischen blättert vorwärts
 
 function render(){let v=cur(),app=$("#app");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===(v.tab||"list")));renderHeaderArea();
 if(v.view==="new"||v.view==="edit")return renderForm(app,v);
