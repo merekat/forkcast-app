@@ -235,7 +235,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <main id="app"></main>
 <script>
 const KEY="wohinEssenV1";
-const APP_VERSION="2026-09-30c";
+const APP_VERSION="2026-09-30f";
 let db=load(),stack=[{tab:"today"}],tagState={},sugg=null,listQuery="",listSort="oldest",currentArea=null;
 
 function load(){try{let v=JSON.parse(localStorage.getItem(KEY)||"null");if(v&&Array.isArray(v.restaurants))return v}catch(e){}return{restaurants:[]}}
@@ -423,15 +423,19 @@ function renderHeaderArea(){let hdr=$("#hdrArea");if(!hdr)return;let areas=usedA
  hdr.innerHTML=areas.length>1?`<button class="areapick" id="areaPick" aria-haspopup="listbox">${PINMINI}<span>${esc(area)}</span></button>`:`<span class="areapick static">${PINMINI}<span>${esc(areas[0])}</span></span>`;
  let ap=$("#areaPick");if(ap)ap.onclick=()=>openAreaMenu(ap,areas,area,a=>{currentArea=a;sugg&&(sugg=suggest());render()})}
 let tagResizeT=null;addEventListener("resize",()=>{clearTimeout(tagResizeT);tagResizeT=setTimeout(()=>{if(cur().tab==="today"&&!cur().view)renderToday($("#app"))},200)});
+// Abwertung nach einem Besuch: in der ersten Woche sehr stark, danach zunehmend milder,
+// ab sechs Wochen gar nicht mehr. Quadratisch, damit der Anfang hart und das Ende sanft ist.
+const RECENCY_DAYS=42;
+const recencyPenalty=d=>d>=RECENCY_DAYS?1:Math.pow(d/RECENCY_DAYS,2);
 function suggest(exclude=[],n=5){let pref=[],excl=[],skip=new Set([...skippedToday(),...exclude]),area=pickArea();for(let[k,s]of Object.entries(tagState)){if(s===1)pref.push(k);if(s===-1)excl.push(k)}
 let wd=weekday(isoToday()),closed=0,pool=[];
 db.restaurants.forEach(r=>{if(skip.has(r.id))return;if(!r.area)return;let tl=(r.tags||[]).map(lc);if(tl.some(t=>excl.includes(t)))return;if((r.closed||[]).includes(wd)){closed++;return}
 let v=lastVisit(r),d=v?Math.max(0,daysSince(v.date)):0,top=dishesOf(r).slice(0,3);
 let rt=v?rRating(r)/5:.6,                                   // Restaurantbewertung (Wunschliste: neutral)
-    rec=v?Math.min(d,45)/45:.6,                           // Tage seit letztem Besuch, gedeckelt bei 45 (25 %)
+    rec=v?Math.min(d,RECENCY_DAYS)/RECENCY_DAYS:.6,       // Tage seit letztem Besuch, gedeckelt bei 42 (25 %)
     dt=top.length?top.reduce((a,x)=>a+x.rating,0)/top.length/5:rt, // beste Gerichte
     s=.55*rt+.25*rec+.2*dt;
-if(v&&d<7)s*=.3;                                          // in der letzten Woche dort gewesen
+if(v)s*=recencyPenalty(d);                                 // je kuerzer der letzte Besuch her ist, desto staerker die Abwertung
 let m=pref.length?tl.filter(t=>pref.includes(t)).length:0;if(m)s*=1+.5*m;           // mehrere passende Tags: innerhalb der Gruppe bevorzugt
 let here=!area||lc(r.area)===lc(area);if(!here)s*=.05;                     // anderer Ort: stark abgewertet
 pool.push({r,m,w:(Math.pow(s,1.5)+.01)*propFactor(r)})});  // Eigenschaften: ±5 % je Punkt, max. ±35 %                   // hoch 1,5 = gute Treffer bevorzugt, aber mit Abwechslung
