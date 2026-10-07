@@ -235,7 +235,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <main id="app"></main>
 <script>
 const KEY="wohinEssenV1";
-const APP_VERSION="2026-09-30f";
+const APP_VERSION="2026-09-30h";
 let db=load(),stack=[{tab:"today"}],tagState={},sugg=null,listQuery="",listSort="oldest",currentArea=null;
 
 function load(){try{let v=JSON.parse(localStorage.getItem(KEY)||"null");if(v&&Array.isArray(v.restaurants))return v}catch(e){}return{restaurants:[]}}
@@ -426,7 +426,27 @@ let tagResizeT=null;addEventListener("resize",()=>{clearTimeout(tagResizeT);tagR
 // Abwertung nach einem Besuch: in der ersten Woche sehr stark, danach zunehmend milder,
 // ab sechs Wochen gar nicht mehr. Quadratisch, damit der Anfang hart und das Ende sanft ist.
 const RECENCY_DAYS=42;
-const recencyPenalty=d=>d>=RECENCY_DAYS?1:Math.pow(d/RECENCY_DAYS,2);
+const recencyPenalty=d=>d>=RECENCY_DAYS?1:Math.pow(d/RECENCY_DAYS,1.5);
+// Abwechslung: Tags, die kuerzlich besuchte Restaurants trugen, werten aehnliche Restaurants ab.
+// Ausgenommen sind Tags, die keine Geschmacksrichtung beschreiben, von der man genug haben kann.
+const NO_FATIGUE=new Set(["takeaway","outdoor seating","café","cafe","coffee","light","hearty","sweet",
+ "street food","brunch","bakery","ice cream","spicy","vegan"]);
+const FATIGUE_K=.4;                                        // hoechstens 40 % Abzug bei voller Ueberschneidung
+function fatigueFactor(r,pref){
+ // Eigene Tags ohne die ausgenommenen und ohne die, die der Nutzer gerade selbst gewaehlt hat
+ const mine=(r.tags||[]).map(lc).filter(t=>!NO_FATIGUE.has(t)&&!pref.includes(t));
+ if(!mine.length)return 1;
+ let worst=1;
+ db.restaurants.forEach(o=>{
+  if(o.id===r.id)return;
+  const lv=lastVisit(o);if(!lv)return;
+  const d=Math.max(0,daysSince(lv.date));if(d>=RECENCY_DAYS)return;
+  const ot=new Set((o.tags||[]).map(lc));
+  const hit=mine.filter(t=>ot.has(t)).length;if(!hit)return;
+  // Anteil statt Anzahl, damit Restaurants mit vielen Tags nicht mehrfach bestraft werden
+  const f=1-FATIGUE_K*(hit/mine.length)*(1-recencyPenalty(d));
+  if(f<worst)worst=f});                                    // staerkster Einzelfall zaehlt, nicht die Summe
+ return worst}
 function suggest(exclude=[],n=5){let pref=[],excl=[],skip=new Set([...skippedToday(),...exclude]),area=pickArea();for(let[k,s]of Object.entries(tagState)){if(s===1)pref.push(k);if(s===-1)excl.push(k)}
 let wd=weekday(isoToday()),closed=0,pool=[];
 db.restaurants.forEach(r=>{if(skip.has(r.id))return;if(!r.area)return;let tl=(r.tags||[]).map(lc);if(tl.some(t=>excl.includes(t)))return;if((r.closed||[]).includes(wd)){closed++;return}
@@ -436,6 +456,7 @@ let rt=v?rRating(r)/5:.6,                                   // Restaurantbewertu
     dt=top.length?top.reduce((a,x)=>a+x.rating,0)/top.length/5:rt, // beste Gerichte
     s=.55*rt+.25*rec+.2*dt;
 if(v)s*=recencyPenalty(d);                                 // je kuerzer der letzte Besuch her ist, desto staerker die Abwertung
+s*=fatigueFactor(r,pref);                                  // aehnliche Kueche kuerzlich gegessen: leicht abgewertet
 let m=pref.length?tl.filter(t=>pref.includes(t)).length:0;if(m)s*=1+.5*m;           // mehrere passende Tags: innerhalb der Gruppe bevorzugt
 let here=!area||lc(r.area)===lc(area);if(!here)s*=.05;                     // anderer Ort: stark abgewertet
 pool.push({r,m,w:(Math.pow(s,1.5)+.01)*propFactor(r)})});  // Eigenschaften: ±5 % je Punkt, max. ±35 %                   // hoch 1,5 = gute Treffer bevorzugt, aber mit Abwechslung
