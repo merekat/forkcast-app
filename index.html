@@ -10,6 +10,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="description" content="Where should we eat tonight? Forkcast keeps your shortlist and picks for you.">
+<!-- Vorschau in Messengern. Ohne diese Angaben zeigen sie das Symbol der Domain-Wurzel,
+     die sich bei GitHub Pages alle Projekte teilen. Adresse anpassen, falls das Repository anders heisst. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Forkcast">
+<meta property="og:title" content="Forkcast">
+<meta property="og:description" content="Where should we eat tonight? Forkcast keeps your shortlist and picks for you.">
+<meta property="og:url" content="https://merekat.github.io/forkcast-app/">
+<meta property="og:image" content="https://merekat.github.io/forkcast-app/icon-512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Forkcast">
+<meta name="twitter:description" content="Where should we eat tonight? Forkcast keeps your shortlist and picks for you.">
+<meta name="twitter:image" content="https://merekat.github.io/forkcast-app/icon-512.png">
 <style>
 :root{--plum:#2b1b35;--plum2:#3d2a4a;--bg:#f5f1f7;--card:#fff;--ink:#24172c;--muted:#6a5d72;--line:#e7dfeb;--saffron:#f5b83d;--saffron2:#ffd27a;--herb:#2e8a57;--herb-bg:#e6f4ec;--tomato:#c94a3b;--tomato-bg:#fbeae7;--grape:#6a3e9e;--gut:12px;
   --font:"Bricolage Grotesque",ui-rounded,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
@@ -220,6 +236,8 @@ button.best{width:100%;border:0;text-align:left;font:inherit;font-size:12px;colo
 .shared p{margin:0}
 .wide{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px}
 .wide svg{width:17px;height:17px;flex:none}
+#pasteShared{display:inline-flex;align-items:center;gap:7px}
+#pasteShared svg{width:16px;height:16px;flex:none}
 .splitline{display:flex;align-items:center;gap:10px;margin:4px 2px 14px;color:var(--muted)}
 .splitline::before,.splitline::after{content:"";flex:1;height:1px;background:var(--line)}
 .splitline span{font-size:12px;font-weight:600;white-space:nowrap}
@@ -239,7 +257,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <main id="app"></main>
 <script>
 const KEY="wohinEssenV1";
-const APP_VERSION="2026-09-30i";
+const APP_VERSION="2026-10-12b";
 let db=load(),stack=[{tab:"today"}],tagState={},sugg=null,listQuery="",listSort="oldest",currentArea=null;
 
 function load(){try{let v=JSON.parse(localStorage.getItem(KEY)||"null");if(v&&Array.isArray(v.restaurants))return v}catch(e){}return{restaurants:[]}}
@@ -384,7 +402,7 @@ function openTab(t){
  else{stack.push({tab:t});history.pushState({},"")}
  render();scrollTo(0,0);navTop=false;
  if(from>=0&&to>=0&&from!==to)slideIn(to>from?1:-1)}
-function slideIn(dir){const a=$("#app");if(!a||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+function slideIn(dir){const a=$("#app");if(!a||(typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches))return;
  a.classList.remove("sl","sr");void a.offsetWidth;a.classList.add(dir>0?"sl":"sr")}
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>openTab(b.dataset.tab));
 // Wischgeste zum Reiterwechsel. Bereiche, die selbst seitlich scrollen (Tag-Slider, Ortsauswahl,
@@ -467,6 +485,16 @@ async function shareList(){
  try{await navigator.clipboard.writeText(url);say("Link copied. Paste it wherever you like.")}
  catch(e){say("Couldn’t copy automatically. The link is:\n\n"+url)}}
 // Beim Start oder bei einem neuen Link die geteilte Liste uebernehmen
+// Falls der Link im Browser statt in der App landet: Text einfuegen und hier oeffnen.
+function openSharedText(txt){
+ const m=/[#&]s=([A-Za-z0-9\-_]+)/.exec(String(txt||""));
+ if(!m){say("That doesn’t look like a Forkcast share link.");return}
+ location.hash="s="+m[1];
+ if(!applySharedLink()){return}
+ stack=[{tab:"today"}];render();scrollTo(0,0)}
+async function pasteShared(){
+ try{const t=await navigator.clipboard.readText();if(t){openSharedText(t);return}}catch(e){}
+ const v=await askText("Paste the shared link here:","","Open");if(v)openSharedText(v)}
 function applySharedLink(){
  const m=/[#&]s=([A-Za-z0-9\-_]+)/.exec(location.hash);if(!m)return false;
  let d;try{d=b64u.dec(m[1])}catch(e){return false}
@@ -480,8 +508,9 @@ function applySharedLink(){
  sugg={list,closed:0,pref:d.p||[],area:d.a||pickArea()};
  return true}
 function suggest(exclude=[],n=5){let pref=[],excl=[],skip=new Set([...skippedToday(),...exclude]),area=pickArea();for(let[k,s]of Object.entries(tagState)){if(s===1)pref.push(k);if(s===-1)excl.push(k)}
-let wd=weekday(isoToday()),closed=0,pool=[];
-db.restaurants.forEach(r=>{if(skip.has(r.id))return;if(!r.area)return;let tl=(r.tags||[]).map(lc);if(tl.some(t=>excl.includes(t)))return;if((r.closed||[]).includes(wd)){closed++;return}
+let wd=weekday(isoToday()),closed=0,elsewhere=0,pool=[];
+db.restaurants.forEach(r=>{if(skip.has(r.id))return;if(!r.area)return;if(area&&lc(r.area)!==lc(area)){elsewhere++;return}
+let tl=(r.tags||[]).map(lc);if(tl.some(t=>excl.includes(t)))return;if((r.closed||[]).includes(wd)){closed++;return}
 let v=lastVisit(r),d=v?Math.max(0,daysSince(v.date)):0,top=dishesOf(r).slice(0,3);
 let rt=v?rRating(r)/5:.6,                                   // Restaurantbewertung (Wunschliste: neutral)
     rec=v?Math.min(d,RECENCY_DAYS)/RECENCY_DAYS:.6,       // Tage seit letztem Besuch, gedeckelt bei 42 (25 %)
@@ -490,13 +519,12 @@ let rt=v?rRating(r)/5:.6,                                   // Restaurantbewertu
 if(v)s*=recencyPenalty(d);                                 // je kuerzer der letzte Besuch her ist, desto staerker die Abwertung
 s*=fatigueFactor(r,pref);                                  // aehnliche Kueche kuerzlich gegessen: leicht abgewertet
 let m=pref.length?tl.filter(t=>pref.includes(t)).length:0;if(m)s*=1+.5*m;           // mehrere passende Tags: innerhalb der Gruppe bevorzugt
-let here=!area||lc(r.area)===lc(area);if(!here)s*=.05;                     // anderer Ort: stark abgewertet
 pool.push({r,m,w:(Math.pow(s,1.5)+.01)*propFactor(r)})});  // Eigenschaften: ±5 % je Punkt, max. ±35 %                   // hoch 1,5 = gute Treffer bevorzugt, aber mit Abwechslung
 // Bevorzugte Tags: gestaffelt nach Anzahl Treffer, innerhalb jeder Stufe gewichtet gewürfelt
 const draw=g=>{let out=[];while(out.length<n&&g.length){let sum=g.reduce((a,x)=>a+x.w,0),x=Math.random()*sum,i=0;while(i<g.length-1&&(x-=g[i].w)>0)i++;out.push(g.splice(i,1)[0].r)}return out};
 let levels=[...new Set(pool.map(x=>x.m))].sort((a,b)=>b-a);                // mehr Treffer = weiter oben
 let list=levels.flatMap(l=>draw(pool.filter(x=>x.m===l))).slice(0,n);
-return{list,closed,pref,area}}
+return{list,closed,elsewhere,pref,area}}
 
 let tagPage=0,popTag=null;const PAGE=10;
 const MOOD_PROMPTS=["What’s tickling your taste buds?","Let’s flirt with dinner options!","What’s tonight’s plot twist?","Adventure or old faithful tonight?","What’s the food mood today?","What’s calling us to devour?","Let fate pick your dinner!","What’s the verdict, chef?","Let’s roll the dice on dinner!","Snack attack or full meal?","Dinner o’clock. Choose wisely.","Your cravings called a meeting.","Let hunger lead the way!","Young night, growing hunger!","Dinner’s a mystery, solve it!","Somewhere, dinner awaits…","Hunger’s knocking!","Dinner’s calling. Pick up?","The night has plans. Do you?","Hunger’s got opinions tonight!","Let’s settle the dinner debate!","Kitchen awaits your verdict.","Somewhere, a fork is waiting…","Somebody feed this household!","Dinner gods await your offering.","Tonight’s hunger needs an answer.","Dinner’s playing hard to get.","Dinner’s in your hands now.","Let’s answer tonight’s hunger!","Your cravings await sentencing."];
@@ -547,8 +575,11 @@ if(sugg){html+=sugg.list.length?`<div class="${animateNext?"anim":""}">${(()=>{c
   let split=-1;
   if(pf.length){if(sugg.list.length&&!hit(sugg.list[0]))split=0;                 // gar kein Treffer: Hinweis ganz oben
    else for(let k=1;k<sugg.list.length;k++){if(hit(sugg.list[k-1])&&!hit(sugg.list[k])){split=k;break}}}
-  return sugg.list.map((r,i)=>(i===split?`<div class="splitline"><span>${split===0?"No matches":"No more matches"} — other options</span></div>`:"")+suggCard(r,i,pf,i===justReplaced,sugg.area)).join("")})()}</div>`:`<div class="card"><p class="muted">No restaurant matches your selection. Remove an exclusion.</p></div>`;
-if(sugg.closed)html+=`<p class="small" style="margin:0 4px 12px">${sugg.closed} restaurant${sugg.closed>1?"s are":" is"} closed today and hidden.</p>`}
+  return sugg.list.map((r,i)=>(i===split?`<div class="splitline"><span>${split===0?"No matches":"No more matches"} — other options</span></div>`:"")+suggCard(r,i,pf,i===justReplaced,sugg.area)).join("")})()}</div>`:`<div class="card"><p class="muted">Nothing left in ${esc(sugg.area||"this area")}${sugg.elsewhere?` — ${sugg.elsewhere} restaurant${sugg.elsewhere>1?"s are":" is"} in other areas`:""}. Pick another area or change your tags.</p></div>`;
+{const notes=[];
+ if(sugg.closed)notes.push(`${sugg.closed} closed today`);
+ if(sugg.elsewhere)notes.push(`${sugg.elsewhere} in other areas`);
+ if(notes.length)html+=`<p class="small" style="margin:0 4px 12px">Hidden: ${notes.join(" · ")}.</p>`}}
 {let sk=skippedToday().map(byId).filter(Boolean);if(sugg&&sk.length)html+=`<p class="small skipline">Not today: ${sk.map(r=>esc(r.name)).join(", ")} · <button class="link" id="undoSkip">Undo</button></p>`}
 if(sugg&&sugg.list.length)html+=`<div class="actions"><button class="secondary wide" id="shareList">${SHARE}Share this list</button></div>`;
 html+=`<div class="actions"><button class="secondary" onclick="openTab('list')">Log a visit / add restaurant</button></div>`;
@@ -562,7 +593,7 @@ let sl=$("#tagSlider");if(sl){sl.scrollLeft=tagPage*sl.clientWidth;let dots=app.
  dots.forEach(d=>d.onclick=()=>sl.scrollTo({left:+d.dataset.page*sl.clientWidth,behavior:"smooth"}))}
 
 app.querySelectorAll("[data-tag]").forEach(b=>b.onclick=()=>{let k=b.dataset.tag,s=tagState[k]||0;tagState[k]=s===0?1:s===1?-1:0;if(!tagState[k])delete tagState[k];popTag=s===0?k:null;if(sugg)sugg=suggest();renderToday(app)});
-$("#roll").onclick=()=>{sharedFrom="";sharedMissing=0;sugg=suggest();animateNext=true;renderToday(app);let t=app.querySelector(".ticket");t&&t.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"center"})};
+$("#roll").onclick=()=>{sharedFrom="";sharedMissing=0;sugg=suggest();animateNext=true;renderToday(app);let t=app.querySelector(".ticket");t&&t.scrollIntoView({behavior:(typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches)?"auto":"smooth",block:"center"})};
 if(any)$("#resetTags").onclick=()=>{tagState={};if(sugg)sugg=suggest();renderToday(app)};
 $("#shareList")&&($("#shareList").onclick=shareList);
 if(keepY&&typeof scrollTo==="function")scrollTo(0,keepY);   // Ansicht bleibt, wo sie war
@@ -787,12 +818,13 @@ let cloud=!c?`<p class="muted">Loading cloud backup …</p>`:!c.configured?`<p c
 :!c.ready?`<p class="muted">${c.error?esc(c.error):"Connecting …"}</p>`
 :!c.user?`<p class="muted">Sign in once. After that, every change is backed up to your Google account automatically, so everything is back even on a new phone.</p><button class="primary" onclick="cloud.signIn()">Sign in with Google</button>`
 :`<p class="muted">Signed in as <strong>${esc(c.user.email)}</strong>. This is a shared backup: everyone allowed in the Firestore rules sees the same data.</p><p class="small">${c.status==="pending"?(navigator.onLine?"Backing up …":"Offline. Will back up once you’re online again."):c.status==="stalled"?"Taking longer than expected. Your changes are saved on this device and will sync once the connection is stable.":c.status==="error"?"":c.last?"Last backup: "+time(c.last):""}</p><button class="secondary sm" onclick="cloud.signOut()">Sign out</button>`;
-app.innerHTML=statsHtml()+areasHtml()+tagsHtml()+`<div class="card"><h2>Cloud backup</h2>${cloud}${c?.error&&c.ready?`<p class="small warn">${esc(c.error)}</p>`:""}</div>
+app.innerHTML=statsHtml()+`<div class="card"><h2>Shared list</h2><p class="small">Got a link from the other one but it opened in the browser? Paste it here to see the list in this app.</p><div class="actions"><button class="secondary" id="pasteShared">${SHARE}Open a shared link</button></div></div>`+areasHtml()+tagsHtml()+`<div class="card"><h2>Cloud backup</h2>${cloud}${c?.error&&c.ready?`<p class="small warn">${esc(c.error)}</p>`:""}</div>
 <div class="card"><h2>Data</h2><p class="muted">${n} restaurant${n===1?"":"s"}, ${vis} visit${vis===1?"":"s"}.</p><p class="small" id="pstat"></p><p class="small">You can also export a backup file, e.g. straight to Google Drive.</p>
 <div class="actions"><button class="primary" onclick="exportData()">Export data</button><label class="secondary" style="display:inline-block;cursor:pointer">Import backup<input type="file" id="imp" accept=".json,application/json" style="display:none"></label></div></div>
 ${pendingImport?`<div class="card importbox" id="importBox"><h3>Import “${esc(pendingImport.name)}”</h3><p class="muted">${pendingImport.data.restaurants.length} restaurants in this backup. How should it be imported?</p><div class="actions"><button class="primary" onclick="doImport('merge')">Merge</button><button class="danger" onclick="doImport('replace')">Replace all</button><button class="secondary" onclick="pendingImport=null;render()">Cancel</button></div><p class="small" style="margin-top:8px"><b>Merge</b> adds new restaurants and visits and keeps everything you already have. <b>Replace all</b> deletes your current data first.</p></div>`:""}${importMsg?`<div class="card"><p class="small" style="margin:0;color:var(--herb)">${esc(importMsg)}</p></div>`:""}
 <div class="card"><h2>Reset</h2><p class="small">Clears the data on this device and signs you out of the cloud. Your cloud backup stays, so signing in again restores everything.</p><button class="danger" onclick="resetLocal()">Clear this device</button>${window.cloudState?.user?`<details class="wipe"><summary>Delete cloud backup permanently</summary><p class="small">This erases the copy in your Google account for good. It cannot be undone.</p><button class="dangerfill" onclick="wipeCloud()">Delete cloud backup</button></details>`:""}</div>
 <div class="card"><h2>Version</h2><p class="verno">${APP_VERSION}</p><p class="small">Must match on all your devices. If it differs, fully reload the app there.</p><p class="credit">Cooked up by <strong>Merekat</strong> — because deciding where to eat shouldn’t take longer than eating.</p></div>`;
+$("#pasteShared")&&($("#pasteShared").onclick=pasteShared);
 $("#imp").onchange=importData;app.querySelectorAll("[data-aren]").forEach(b=>b.onclick=()=>renameArea(b.dataset.aren));app.querySelectorAll("[data-adel]").forEach(b=>b.onclick=()=>deleteArea(b.dataset.adel));$("#areaToggle")&&($("#areaToggle").onclick=()=>{areasExpanded=!areasExpanded;render();if(!areasExpanded)$("#areaCard").scrollIntoView({block:"start"})});$("#addArea")&&($("#addArea").onclick=addCatalogArea);$("#newArea")&&($("#newArea").onkeydown=e=>{if(e.key==="Enter")addCatalogArea()});app.querySelectorAll("[data-tren]").forEach(b=>b.onclick=()=>renameTag(b.dataset.tren));$("#tagToggle")&&($("#tagToggle").onclick=()=>{tagsExpanded=!tagsExpanded;render();if(!tagsExpanded)$("#tagCard").scrollIntoView({block:"start"})});$("#addTag").onclick=addCatalogTag;$("#newTag").onkeydown=e=>{if(e.key==="Enter")addCatalogTag()};app.querySelectorAll("[data-tdel]").forEach(b=>b.onclick=()=>deleteTag(b.dataset.tdel));navigator.storage?.persisted?.().then(p=>{let el=$("#pstat");if(el)el.textContent=p?"Storage is marked as persistent: Chrome won’t clear it when space runs low.":"Local storage isn’t marked as persistent. With cloud backup that’s not a problem."})}
 async function exportData(){let name="forkcast-backup-"+isoToday()+".json",json=JSON.stringify(db,null,2);
 try{let file=new File([json],name,{type:"application/json"});if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:name});return done()}}catch(e){if(e.name==="AbortError")return}
