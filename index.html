@@ -216,6 +216,10 @@ button.best{width:100%;border:0;text-align:left;font:inherit;font-size:12px;colo
 .signin .ava{width:52px;height:52px;margin:2px 0 8px}
 .signin .ava.second{margin-left:-14px}
 .signin h2{margin-bottom:4px}
+.shared{background:#f6f1fa;border-color:#e3d6ee}
+.shared p{margin:0}
+.wide{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.wide svg{width:17px;height:17px;flex:none}
 .splitline{display:flex;align-items:center;gap:10px;margin:4px 2px 14px;color:var(--muted)}
 .splitline::before,.splitline::after{content:"";flex:1;height:1px;background:var(--line)}
 .splitline span{font-size:12px;font-weight:600;white-space:nowrap}
@@ -235,7 +239,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <main id="app"></main>
 <script>
 const KEY="wohinEssenV1";
-const APP_VERSION="2026-09-30h";
+const APP_VERSION="2026-09-30i";
 let db=load(),stack=[{tab:"today"}],tagState={},sugg=null,listQuery="",listSort="oldest",currentArea=null;
 
 function load(){try{let v=JSON.parse(localStorage.getItem(KEY)||"null");if(v&&Array.isArray(v.restaurants))return v}catch(e){}return{restaurants:[]}}
@@ -329,6 +333,7 @@ const propFactor=r=>Math.min(1.35,Math.max(.65,1+.05*(r.props||[]).reduce((a,k)=
 const wLabel=w=>`<span class="w" aria-label="${w>0?"+":"−"}${Math.abs(w)}">${`<i>${w>0?"<svg viewBox='0 0 12 12'><path d='M6 2.2v7.6M2.2 6h7.6' stroke='#fff' stroke-width='2' stroke-linecap='round'/></svg>":"<svg viewBox='0 0 12 12'><path d='M2.2 6h7.6' stroke='#fff' stroke-width='2' stroke-linecap='round'/></svg>"}</i>`.repeat(Math.abs(w))}</span>`;
 function propsHtml(r){let ps=(r.props||[]).map(k=>PROP[k]).filter(Boolean).sort((a,b)=>b.w-a.w);return ps.length?`<div class="props">${ps.map(p=>`<span class="prop ${p.w>0?"pos":"neg"}">${`<i>${p.w>0?"<svg viewBox='0 0 12 12'><path d='M6 2.2v7.6M2.2 6h7.6' stroke='#fff' stroke-width='2' stroke-linecap='round'/></svg>":"<svg viewBox='0 0 12 12'><path d='M2.2 6h7.6' stroke='#fff' stroke-width='2' stroke-linecap='round'/></svg>"}</i>`.repeat(Math.abs(p.w))}${esc(p.l)}</span>`).join("")}</div>`:""}
 const noteHtml=r=>r.note?.trim()?`<div class="note">${esc(r.note.trim())}</div>`:"";
+const SHARE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v13"/><path d="M8 7l4-4 4 4"/></svg>';
 const PEN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg>';
 const BIN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
 const shortDish=d=>(d.no?d.no+" · ":"")+(d.name.length>20?d.name.slice(0,20).trimEnd()+"...":d.name);
@@ -447,6 +452,33 @@ function fatigueFactor(r,pref){
   const f=1-FATIGUE_K*(hit/mine.length)*(1-recencyPenalty(d));
   if(f<worst)worst=f});                                    // staerkster Einzelfall zaehlt, nicht die Summe
  return worst}
+// Geteilte Liste: nur die Kennungen der Restaurants wandern in den Link. Weil beide Konten
+// dieselbe Datenbank nutzen, schlaegt die Gegenseite sie in ihren eigenen Daten nach.
+const b64u={
+ enc:o=>btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(o)))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""),
+ dec:t=>JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(t.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0))))};
+function shareLink(){
+ const payload={l:sugg.list.map(r=>r.id),p:sugg.pref||[],a:sugg.area||"",u:meKey()||""};
+ return location.origin+location.pathname+"#s="+b64u.enc(payload)}
+async function shareList(){
+ const url=shareLink(),who=meKey()?userLabel(meKey()):"Someone";
+ const text=who+"’s picks for today";
+ try{if(navigator.share){await navigator.share({title:"Forkcast",text,url});return}}catch(e){if(e&&e.name==="AbortError")return}
+ try{await navigator.clipboard.writeText(url);say("Link copied. Paste it wherever you like.")}
+ catch(e){say("Couldn’t copy automatically. The link is:\n\n"+url)}}
+// Beim Start oder bei einem neuen Link die geteilte Liste uebernehmen
+function applySharedLink(){
+ const m=/[#&]s=([A-Za-z0-9\-_]+)/.exec(location.hash);if(!m)return false;
+ let d;try{d=b64u.dec(m[1])}catch(e){return false}
+ if(!Array.isArray(d?.l))return false;
+ history.replaceState({},"",location.pathname+location.search);     // Link nur einmal anwenden
+ const list=d.l.map(byId).filter(Boolean);
+ if(!list.length){say("That shared list points to restaurants this device doesn’t know yet. Sign in and let it sync, then open the link again.");return false}
+ sharedMissing=d.l.length-list.length;sharedFrom=d.u||"";
+ tagState={};(d.p||[]).forEach(t=>tagState[t]=1);
+ if(d.a)currentArea=d.a;
+ sugg={list,closed:0,pref:d.p||[],area:d.a||pickArea()};
+ return true}
 function suggest(exclude=[],n=5){let pref=[],excl=[],skip=new Set([...skippedToday(),...exclude]),area=pickArea();for(let[k,s]of Object.entries(tagState)){if(s===1)pref.push(k);if(s===-1)excl.push(k)}
 let wd=weekday(isoToday()),closed=0,pool=[];
 db.restaurants.forEach(r=>{if(skip.has(r.id))return;if(!r.area)return;let tl=(r.tags||[]).map(lc);if(tl.some(t=>excl.includes(t)))return;if((r.closed||[]).includes(wd)){closed++;return}
@@ -502,7 +534,9 @@ if(!withArea){app.innerHTML=`<div class="card empty">${BOWL}<h2>Add an area firs
 let tags=SHOW_ALL_TAGS_IN_PICKER?tagPool():allTags(),any=Object.values(tagState).some(Boolean),areas=usedAreas(),area=pickArea();
 let pages=[tags];
 if(tags.length){app.innerHTML=`<section class="hero">${measurePickerHtml(tags)}</section>`;pages=computeTagPages(app,tags,4)}
-let html=`<section class="hero"><h2>${esc(moodPrompt())}</h2>
+let html="";
+if(sharedFrom||sharedMissing)html+=`<div class="card shared"><p class="small">${sharedFrom?`Shared list from <strong>${esc(userLabel(sharedFrom))}</strong>.`:"Shared list."}${sharedMissing?` ${sharedMissing} restaurant${sharedMissing>1?"s aren’t":" isn’t"} on this device yet.`:""}</p></div>`;
+html+=`<section class="hero"><h2>${esc(moodPrompt())}</h2>
 ${tags.length?pickerHtml(tags,pages):`<p class="muted">No tags yet. Add tags to your restaurants.</p>`}
 <div class="actions full">${any?`<button class="ghostbtn" id="resetTags">Reset</button>`:""}<button class="primary cta" id="roll">${DICE}${sugg?"Roll again":"Show suggestions"}</button></div></section>`;
 {const c=window.cloudState;
@@ -516,6 +550,7 @@ if(sugg){html+=sugg.list.length?`<div class="${animateNext?"anim":""}">${(()=>{c
   return sugg.list.map((r,i)=>(i===split?`<div class="splitline"><span>${split===0?"No matches":"No more matches"} — other options</span></div>`:"")+suggCard(r,i,pf,i===justReplaced,sugg.area)).join("")})()}</div>`:`<div class="card"><p class="muted">No restaurant matches your selection. Remove an exclusion.</p></div>`;
 if(sugg.closed)html+=`<p class="small" style="margin:0 4px 12px">${sugg.closed} restaurant${sugg.closed>1?"s are":" is"} closed today and hidden.</p>`}
 {let sk=skippedToday().map(byId).filter(Boolean);if(sugg&&sk.length)html+=`<p class="small skipline">Not today: ${sk.map(r=>esc(r.name)).join(", ")} · <button class="link" id="undoSkip">Undo</button></p>`}
+if(sugg&&sugg.list.length)html+=`<div class="actions"><button class="secondary wide" id="shareList">${SHARE}Share this list</button></div>`;
 html+=`<div class="actions"><button class="secondary" onclick="openTab('list')">Log a visit / add restaurant</button></div>`;
 animateNext=false;justReplaced=-1;app.innerHTML=html;
 
@@ -527,8 +562,9 @@ let sl=$("#tagSlider");if(sl){sl.scrollLeft=tagPage*sl.clientWidth;let dots=app.
  dots.forEach(d=>d.onclick=()=>sl.scrollTo({left:+d.dataset.page*sl.clientWidth,behavior:"smooth"}))}
 
 app.querySelectorAll("[data-tag]").forEach(b=>b.onclick=()=>{let k=b.dataset.tag,s=tagState[k]||0;tagState[k]=s===0?1:s===1?-1:0;if(!tagState[k])delete tagState[k];popTag=s===0?k:null;if(sugg)sugg=suggest();renderToday(app)});
-$("#roll").onclick=()=>{sugg=suggest();animateNext=true;renderToday(app);let t=app.querySelector(".ticket");t&&t.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"center"})};
+$("#roll").onclick=()=>{sharedFrom="";sharedMissing=0;sugg=suggest();animateNext=true;renderToday(app);let t=app.querySelector(".ticket");t&&t.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"center"})};
 if(any)$("#resetTags").onclick=()=>{tagState={};if(sugg)sugg=suggest();renderToday(app)};
+$("#shareList")&&($("#shareList").onclick=shareList);
 if(keepY&&typeof scrollTo==="function")scrollTo(0,keepY);   // Ansicht bleibt, wo sie war
 navTop=false;
 app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>nav({view:"detail",rid:b.dataset.go,tab:"list"}));
@@ -710,7 +746,7 @@ return`<div class="card"><h2>Stats</h2><div class="statgrid"><div class="stat"><
 ${topTags.length?`<div><h3>Most visited tags</h3><ul class="slist">${topTags.map(([g,n])=>li(esc(g),n+" visit"+(n===1?"":"s"))).join("")}</ul></div>`:""}
 ${dishes.length?`<div><h3>Favourite dishes</h3><ul class="slist">${dishes.map(d=>li(`${esc(d.name)} <small>${esc(d.r.name)}</small>`,d.rating+"/5")).join("")}</ul></div>`:""}</div>
 <p class="small" style="margin-top:12px">${db.restaurants.length} restaurant${db.restaurants.length===1?"":"s"} in total, ${db.restaurants.filter(r=>!r.visits?.length).length} on the wishlist.</p></div>`}
-let tagsExpanded=false,areasExpanded=false,dishOpen={};
+let tagsExpanded=false,areasExpanded=false,dishOpen={},sharedMissing=0,sharedFrom="";
 const CHEV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 function areasHtml(){let all=[...new Set([...areaCatalog(),...usedAreas()])],cnt={};db.restaurants.forEach(r=>{if(r.area)cnt[lc(r.area)]=(cnt[lc(r.area)]||0)+1});
 let rows=all.map(a=>({name:a,n:cnt[lc(a)]||0})).sort((x,y)=>y.n-x.n||x.name.localeCompare(y.name,"en"));
@@ -851,6 +887,8 @@ async function resetLocal(){if(!await ask("Clear all data on this device? Your c
 async function wipeCloud(){if(!await ask("Permanently delete the cloud backup? This cannot be undone.","Delete backup",true))return;let ok=window.cloud?.wipe?await window.cloud.wipe():false;say(ok?"Cloud backup deleted.":"Could not delete the cloud backup. Check your connection and that you are signed in.")}
 
 migrateTags();ensureCatalog();ensureAreaCatalog();normalizeAll();
+applySharedLink();
+addEventListener("hashchange",()=>{if(applySharedLink()){stack=[{tab:"today"}];render();scrollTo(0,0)}});
 render();
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("./sw.js");
 if(navigator.storage?.persist)navigator.storage.persist();
