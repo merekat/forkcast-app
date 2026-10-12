@@ -232,12 +232,12 @@ button.best{width:100%;border:0;text-align:left;font:inherit;font-size:12px;colo
 .signin .ava{width:52px;height:52px;margin:2px 0 8px}
 .signin .ava.second{margin-left:-14px}
 .signin h2{margin-bottom:4px}
-.shared{background:#f6f1fa;border-color:#e3d6ee}
-.shared p{margin:0}
+.sharednote{margin:0 4px 10px;color:var(--grape);font-weight:600}
 .wide{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px}
 .wide svg{width:17px;height:17px;flex:none}
-#pasteShared{display:inline-flex;align-items:center;gap:7px}
+#pasteShared{display:inline-flex;align-items:center;gap:6px;flex:none;padding-left:13px;padding-right:13px;font-size:14px}
 #pasteShared svg{width:16px;height:16px;flex:none}
+@media(max-width:379px){#pasteShared .btxt{display:none}#pasteShared{padding-left:11px;padding-right:11px}}
 .splitline{display:flex;align-items:center;gap:10px;margin:4px 2px 14px;color:var(--muted)}
 .splitline::before,.splitline::after{content:"";flex:1;height:1px;background:var(--line)}
 .splitline span{font-size:12px;font-weight:600;white-space:nowrap}
@@ -257,7 +257,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <main id="app"></main>
 <script>
 const KEY="wohinEssenV1";
-const APP_VERSION="2026-10-12b";
+const APP_VERSION="2026-10-12c";
 let db=load(),stack=[{tab:"today"}],tagState={},sugg=null,listQuery="",listSort="oldest",currentArea=null;
 
 function load(){try{let v=JSON.parse(localStorage.getItem(KEY)||"null");if(v&&Array.isArray(v.restaurants))return v}catch(e){}return{restaurants:[]}}
@@ -562,9 +562,7 @@ if(!withArea){app.innerHTML=`<div class="card empty">${BOWL}<h2>Add an area firs
 let tags=SHOW_ALL_TAGS_IN_PICKER?tagPool():allTags(),any=Object.values(tagState).some(Boolean),areas=usedAreas(),area=pickArea();
 let pages=[tags];
 if(tags.length){app.innerHTML=`<section class="hero">${measurePickerHtml(tags)}</section>`;pages=computeTagPages(app,tags,4)}
-let html="";
-if(sharedFrom||sharedMissing)html+=`<div class="card shared"><p class="small">${sharedFrom?`Shared list from <strong>${esc(userLabel(sharedFrom))}</strong>.`:"Shared list."}${sharedMissing?` ${sharedMissing} restaurant${sharedMissing>1?"s aren’t":" isn’t"} on this device yet.`:""}</p></div>`;
-html+=`<section class="hero"><h2>${esc(moodPrompt())}</h2>
+let html=`<section class="hero"><h2>${esc(moodPrompt())}</h2>
 ${tags.length?pickerHtml(tags,pages):`<p class="muted">No tags yet. Add tags to your restaurants.</p>`}
 <div class="actions full">${any?`<button class="ghostbtn" id="resetTags">Reset</button>`:""}<button class="primary cta" id="roll">${DICE}${sugg?"Roll again":"Show suggestions"}</button></div></section>`;
 {const c=window.cloudState;
@@ -581,8 +579,9 @@ if(sugg){html+=sugg.list.length?`<div class="${animateNext?"anim":""}">${(()=>{c
  if(sugg.elsewhere)notes.push(`${sugg.elsewhere} in other areas`);
  if(notes.length)html+=`<p class="small" style="margin:0 4px 12px">Hidden: ${notes.join(" · ")}.</p>`}}
 {let sk=skippedToday().map(byId).filter(Boolean);if(sugg&&sk.length)html+=`<p class="small skipline">Not today: ${sk.map(r=>esc(r.name)).join(", ")} · <button class="link" id="undoSkip">Undo</button></p>`}
+if(sugg&&(sharedFrom||sharedMissing))html+=`<p class="small sharednote">${sharedFrom?`Shared by ${esc(userLabel(sharedFrom))}`:"Shared list"}${sharedMissing?` · ${sharedMissing} not on this device yet`:""}</p>`;
 if(sugg&&sugg.list.length)html+=`<div class="actions"><button class="secondary wide" id="shareList">${SHARE}Share this list</button></div>`;
-html+=`<div class="actions"><button class="secondary" onclick="openTab('list')">Log a visit / add restaurant</button></div>`;
+html+=`<div class="actions"><button class="secondary" onclick="openTab('list')">Log a visit / add restaurant</button><button class="secondary" id="pasteShared" title="Open a shared link" aria-label="Open a shared link">${SHARE}<span class="btxt">Shared</span></button></div>`;
 animateNext=false;justReplaced=-1;app.innerHTML=html;
 
 let pk=$("#picked"),pc=pk&&popTag&&pk.querySelector(`[data-tag="${CSS.escape(popTag)}"]`);if(pc)pk.scrollLeft=pc.offsetLeft+pc.offsetWidth-pk.clientWidth+8;
@@ -596,6 +595,7 @@ app.querySelectorAll("[data-tag]").forEach(b=>b.onclick=()=>{let k=b.dataset.tag
 $("#roll").onclick=()=>{sharedFrom="";sharedMissing=0;sugg=suggest();animateNext=true;renderToday(app);let t=app.querySelector(".ticket");t&&t.scrollIntoView({behavior:(typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches)?"auto":"smooth",block:"center"})};
 if(any)$("#resetTags").onclick=()=>{tagState={};if(sugg)sugg=suggest();renderToday(app)};
 $("#shareList")&&($("#shareList").onclick=shareList);
+$("#pasteShared")&&($("#pasteShared").onclick=pasteShared);
 if(keepY&&typeof scrollTo==="function")scrollTo(0,keepY);   // Ansicht bleibt, wo sie war
 navTop=false;
 app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>nav({view:"detail",rid:b.dataset.go,tab:"list"}));
@@ -818,13 +818,12 @@ let cloud=!c?`<p class="muted">Loading cloud backup …</p>`:!c.configured?`<p c
 :!c.ready?`<p class="muted">${c.error?esc(c.error):"Connecting …"}</p>`
 :!c.user?`<p class="muted">Sign in once. After that, every change is backed up to your Google account automatically, so everything is back even on a new phone.</p><button class="primary" onclick="cloud.signIn()">Sign in with Google</button>`
 :`<p class="muted">Signed in as <strong>${esc(c.user.email)}</strong>. This is a shared backup: everyone allowed in the Firestore rules sees the same data.</p><p class="small">${c.status==="pending"?(navigator.onLine?"Backing up …":"Offline. Will back up once you’re online again."):c.status==="stalled"?"Taking longer than expected. Your changes are saved on this device and will sync once the connection is stable.":c.status==="error"?"":c.last?"Last backup: "+time(c.last):""}</p><button class="secondary sm" onclick="cloud.signOut()">Sign out</button>`;
-app.innerHTML=statsHtml()+`<div class="card"><h2>Shared list</h2><p class="small">Got a link from the other one but it opened in the browser? Paste it here to see the list in this app.</p><div class="actions"><button class="secondary" id="pasteShared">${SHARE}Open a shared link</button></div></div>`+areasHtml()+tagsHtml()+`<div class="card"><h2>Cloud backup</h2>${cloud}${c?.error&&c.ready?`<p class="small warn">${esc(c.error)}</p>`:""}</div>
+app.innerHTML=statsHtml()+areasHtml()+tagsHtml()+`<div class="card"><h2>Cloud backup</h2>${cloud}${c?.error&&c.ready?`<p class="small warn">${esc(c.error)}</p>`:""}</div>
 <div class="card"><h2>Data</h2><p class="muted">${n} restaurant${n===1?"":"s"}, ${vis} visit${vis===1?"":"s"}.</p><p class="small" id="pstat"></p><p class="small">You can also export a backup file, e.g. straight to Google Drive.</p>
 <div class="actions"><button class="primary" onclick="exportData()">Export data</button><label class="secondary" style="display:inline-block;cursor:pointer">Import backup<input type="file" id="imp" accept=".json,application/json" style="display:none"></label></div></div>
 ${pendingImport?`<div class="card importbox" id="importBox"><h3>Import “${esc(pendingImport.name)}”</h3><p class="muted">${pendingImport.data.restaurants.length} restaurants in this backup. How should it be imported?</p><div class="actions"><button class="primary" onclick="doImport('merge')">Merge</button><button class="danger" onclick="doImport('replace')">Replace all</button><button class="secondary" onclick="pendingImport=null;render()">Cancel</button></div><p class="small" style="margin-top:8px"><b>Merge</b> adds new restaurants and visits and keeps everything you already have. <b>Replace all</b> deletes your current data first.</p></div>`:""}${importMsg?`<div class="card"><p class="small" style="margin:0;color:var(--herb)">${esc(importMsg)}</p></div>`:""}
 <div class="card"><h2>Reset</h2><p class="small">Clears the data on this device and signs you out of the cloud. Your cloud backup stays, so signing in again restores everything.</p><button class="danger" onclick="resetLocal()">Clear this device</button>${window.cloudState?.user?`<details class="wipe"><summary>Delete cloud backup permanently</summary><p class="small">This erases the copy in your Google account for good. It cannot be undone.</p><button class="dangerfill" onclick="wipeCloud()">Delete cloud backup</button></details>`:""}</div>
 <div class="card"><h2>Version</h2><p class="verno">${APP_VERSION}</p><p class="small">Must match on all your devices. If it differs, fully reload the app there.</p><p class="credit">Cooked up by <strong>Merekat</strong> — because deciding where to eat shouldn’t take longer than eating.</p></div>`;
-$("#pasteShared")&&($("#pasteShared").onclick=pasteShared);
 $("#imp").onchange=importData;app.querySelectorAll("[data-aren]").forEach(b=>b.onclick=()=>renameArea(b.dataset.aren));app.querySelectorAll("[data-adel]").forEach(b=>b.onclick=()=>deleteArea(b.dataset.adel));$("#areaToggle")&&($("#areaToggle").onclick=()=>{areasExpanded=!areasExpanded;render();if(!areasExpanded)$("#areaCard").scrollIntoView({block:"start"})});$("#addArea")&&($("#addArea").onclick=addCatalogArea);$("#newArea")&&($("#newArea").onkeydown=e=>{if(e.key==="Enter")addCatalogArea()});app.querySelectorAll("[data-tren]").forEach(b=>b.onclick=()=>renameTag(b.dataset.tren));$("#tagToggle")&&($("#tagToggle").onclick=()=>{tagsExpanded=!tagsExpanded;render();if(!tagsExpanded)$("#tagCard").scrollIntoView({block:"start"})});$("#addTag").onclick=addCatalogTag;$("#newTag").onkeydown=e=>{if(e.key==="Enter")addCatalogTag()};app.querySelectorAll("[data-tdel]").forEach(b=>b.onclick=()=>deleteTag(b.dataset.tdel));navigator.storage?.persisted?.().then(p=>{let el=$("#pstat");if(el)el.textContent=p?"Storage is marked as persistent: Chrome won’t clear it when space runs low.":"Local storage isn’t marked as persistent. With cloud backup that’s not a problem."})}
 async function exportData(){let name="forkcast-backup-"+isoToday()+".json",json=JSON.stringify(db,null,2);
 try{let file=new File([json],name,{type:"application/json"});if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:name});return done()}}catch(e){if(e.name==="AbortError")return}
