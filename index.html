@@ -27,7 +27,7 @@
 <meta name="twitter:description" content="Where should we eat tonight? Forkcast keeps your shortlist and picks for you.">
 <meta name="twitter:image" content="https://merekat.github.io/forkcast-app/icon-512.png">
 <style>
-:root{--plum:#683691;--plum2:#7f35bb;--bg:#f4f1f7;--card:#fff;--ink:#1d0e2a;--muted:#6a5b76;--line:#e6dfeb;--saffron:#f5b83d;--saffron2:#ffd27a;--herb:#2e8a57;--herb-bg:#e6f4ec;--tomato:#c94a3b;--tomato-bg:#fbeae7;--grape:#7133a3;--gut:12px;
+:root{--plum:#683691;--plum2:#7f35bb;--bg:#f4f1f7;--card:#fff;--ink:#1d0e2a;--muted:#6a5b76;--line:#e6dfeb;--saffron:#f5b83d;--saffron2:#ffd27a;--herb:#2f8f82;--herb-bg:#e4f2f0;--tomato:#c15a3e;--tomato-bg:#fbece5;--grape:#7133a3;--gut:12px;
   --font:"Bricolage Grotesque",ui-rounded,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 *{box-sizing:border-box}
 html,body{overflow-x:hidden}
@@ -74,13 +74,13 @@ textarea{resize:vertical;margin-top:5px}
 /* Tags */
 .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
 .chip{border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:20px;padding:7px 13px;font-size:14px;font-weight:600;line-height:1.1;display:inline-flex;align-items:center;gap:4px}
-.chip.pref{background:var(--herb-bg);border-color:var(--herb);color:#1d6b40}
+.chip.pref{background:var(--herb-bg);border-color:var(--herb);color:#1c6359}
 .chip.excl{background:var(--tomato-bg);border-color:var(--tomato);color:var(--tomato);text-decoration:line-through}
 .chip.on{background:#f2edf6;border-color:#e1d6ea}
 .chip.ghost{color:var(--muted);border-style:dashed;font-weight:500}
 .chip .x{border:0;background:none;padding:0 0 0 4px;font-size:18px;line-height:1;color:var(--muted)}
 .chips.mini{gap:5px}.chips.mini .chip{padding:4px 10px;font-size:12.5px;border-width:1px;background:#f6f3f9;font-weight:600;color:#513f5f}
-.chips.mini .chip.pref{background:var(--herb-bg);color:#1d6b40}
+.chips.mini .chip.pref{background:var(--herb-bg);color:#1c6359}
 .tagrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-top:9px}
 /* Heute: Hero */
 .hero{background:var(--plum);color:#fff;margin:-14px calc(-1*var(--gut)) 18px;padding:14px 18px 20px;border-radius:0 0 26px 26px}
@@ -88,7 +88,7 @@ textarea{resize:vertical;margin-top:5px}
 .hero .hint{color:#d4cadd;font-size:13px;margin:0}
 .hero .chip{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.28);color:#f5f0f9}
 .hero .chip.pref{background:var(--herb);border-color:var(--herb);color:#fff}
-.hero .chip.excl{background:rgba(201,74,59,.25);border-color:#e0705f;color:#ffc9c0}
+.hero .chip.excl{background:var(--tomato);border-color:var(--tomato);color:#fff}
 .hero .muted{color:#c8bcd1}
 .hero .actions{margin-top:16px}
 .cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:16px;padding:13px 18px}.cta svg{width:20px;height:20px}.actions.full{flex-direction:row-reverse;align-items:stretch}.actions.full .cta{flex:1}.actions.full .ghostbtn{flex:none}
@@ -144,7 +144,7 @@ textarea{resize:vertical;margin-top:5px}
 .pgrid{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.psec{padding:10px 0 12px;border-top:1px solid var(--line)}.psec:first-child{border-top:0;padding-top:2px}.psec:last-child{padding-bottom:2px}.psec h4{margin:0 0 4px;font-size:13.5px;font-weight:800;color:var(--plum);letter-spacing:-.1px}.psec .prow:first-of-type{margin-top:4px}.prow.nolabel{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 .pbtn{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:8px 9px;font-size:13px;line-height:1.25;color:var(--ink);text-align:left;display:flex;justify-content:space-between;align-items:center;gap:6px;min-width:0;font-weight:550}
 .prow .pbtn{width:100%;height:100%}
-.pbtn.on.pos{background:var(--herb-bg);border-color:var(--herb);color:#1d6b40;font-weight:700}.pbtn.on.neg{background:var(--tomato-bg);border-color:var(--tomato);color:#9a2e22;font-weight:700}
+.pbtn.on.pos{background:var(--herb-bg);border-color:var(--herb);color:#1c6359;font-weight:700}.pbtn.on.neg{background:var(--tomato-bg);border-color:var(--tomato);color:#8f3e28;font-weight:700}
 .pbtn .w{display:inline-flex;gap:3px;flex:none}.pbtn .w i{width:15px;height:15px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center}.pbtn .w i svg{width:11px;height:11px;display:block}.pbtn .w i svg path{stroke:currentColor}.pbtn.pos .w i{background:#d3ecdd;color:#2e8a57}.pbtn.neg .w i{background:#f6d6d1;color:#c94a3b}.pbtn:not(.on) .w i{opacity:.85}
 .note{margin-top:10px;padding:9px 11px;border-left:3px solid var(--saffron);background:#fffaf0;font-size:13.5px;color:#463753;white-space:pre-wrap;border-radius:0 10px 10px 0}
 .t-body .actions{flex-wrap:nowrap}.t-body .actions>button{flex:none}
@@ -169,8 +169,8 @@ button.best{width:100%;border:0;text-align:left;font:inherit;font-size:12px;colo
 .chips.picked{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;height:46px;align-items:center;margin-top:10px;padding:0 0 10px;border-bottom:1px solid rgba(255,255,255,.14)}.chips.picked::-webkit-scrollbar{display:none}.chips.picked.fl{-webkit-mask-image:linear-gradient(90deg,transparent,#000 22px);mask-image:linear-gradient(90deg,transparent,#000 22px)}.chips.picked.fr{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 22px),transparent)}.chips.picked.fl.fr{-webkit-mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent)}.chips.picked .chip{flex:none}.hero .picked .chip.excl{background:var(--tomato);border-color:var(--tomato);color:#fff;text-decoration-color:rgba(255,255,255,.7)}
 .pickhint{font-size:13px;color:#c1b3cc;border:1.5px dashed rgba(255,255,255,.3);border-radius:20px;padding:7px 13px}
 /* im Slider nur dezent markiert */
-.hero .slider .chip.pref{background:rgba(46,138,87,.3);border-color:#5fbf8a;color:#e8f8ee}
-.hero .slider .chip.excl{background:rgba(201,74,59,.26);border-color:#e8806f;color:#ffe0da;text-decoration:line-through;text-decoration-color:rgba(255,224,218,.75)}
+.hero .slider .chip.pref{background:rgba(47,143,130,.3);border-color:#5fc2b5;color:#e8f8f5}
+.hero .slider .chip.excl{background:rgba(193,90,62,.26);border-color:#e08b6f;color:#ffe0d4;text-decoration:line-through;text-decoration-color:rgba(255,224,212,.75)}
 .chip.pop{animation:pop .32s cubic-bezier(.3,1.6,.5,1)}@keyframes pop{0%{transform:scale(.7);opacity:.3}100%{transform:scale(1);opacity:1}}
 .slider{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin-top:9px;overscroll-behavior-x:contain}.slider::-webkit-scrollbar{display:none}
 .slider:not(.multi){overflow:visible}
@@ -257,7 +257,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <main id="app"></main>
 <script>
 const KEY="wohinEssenV1";
-const APP_VERSION="2026-11-07f";
+const APP_VERSION="2026-11-09a";
 let db=load(),stack=[{tab:"today"}],tagState={},sugg=null,listQuery="",listSort="oldest",currentArea=null;
 
 function load(){try{let v=JSON.parse(localStorage.getItem(KEY)||"null");if(v&&Array.isArray(v.restaurants))return v}catch(e){}return{restaurants:[]}}
