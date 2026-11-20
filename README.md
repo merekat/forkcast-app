@@ -13,7 +13,7 @@ Cooked up by **Merekat** — because deciding where to eat shouldn't take longer
 **Suggestions**
 - Five suggestions per roll, weighted by rating, how long ago you were there, and how good the best dishes are
 - Mood filter: tap a tag once to prefer it, twice to exclude it, three times to clear
-- Area filter: pick where you are right now; restaurants elsewhere are pushed far down
+- Area filter: pick where you are right now; restaurants elsewhere are never suggested
 - Each suggestion shows up to three best dishes and three to avoid
 - **Not today** drops one suggestion for the rest of the day and pulls in a replacement
 - Restaurants with a day off are hidden automatically
@@ -111,17 +111,26 @@ Every eligible restaurant gets a score:
 | Part | Weight |
 |---|---|
 | Rating (weighted average of recent visits, newest counts most) | 55 % |
-| Days since the last visit, capped at 45 days | 25 % |
+| Days since the last visit, capped at 42 days | 25 % |
 | Average rating of the three best dishes | 20 % |
+
+Restaurants with no visit yet count as neutral (0.6) for all three parts.
+
+Some restaurants are filtered out before scoring:
+
+- **Rating below 1.5 (one star)**: never suggested
+- **Rating from 1.5 to below 2.5 (two stars)**: only enters the pool in about 5 % of rolls
+- **Different area than the one selected, no area set, closed today, excluded tag, or dismissed today**: never suggested
 
 Then a few multipliers:
 
+- **Never visited**: × 0.8, so rated places rank somewhat higher
+- **Recently visited**: scaled down quadratically-ish over 42 days (very strong in the first week, none after six weeks)
+- **Similar cuisine eaten recently**: up to −40 %, based on overlapping tags (neutral tags like takeaway or brunch are exempt)
 - **Traits**: ±5 % per point, capped at ±35 % overall
-- **Visited in the last 7 days**: × 0.3
-- **Different area than the one selected**: × 0.05
 - **Preferred tags**: restaurants are grouped by how many of your picked tags they match; more matches always rank above fewer
 
-Within each group the pick is weighted random, so the same place does not win every time. Restaurants with no area set never appear.
+Within each group the pick is weighted random (score to the power of 1.5), so the same place does not win every time.
 
 ---
 
